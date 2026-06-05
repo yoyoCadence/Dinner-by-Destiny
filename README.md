@@ -35,11 +35,13 @@ npm run test
 
 ## 部署
 
-GitHub Pages 會在 `main` 更新時自動部署：
+GitHub Pages 目前由 `gh-pages` branch 發布。更新靜態 artifact 前先執行：
 
 ```bash
 npm run build:pages
 ```
+
+再將 `dist/` 內容發布到 `gh-pages` branch。
 
 正式網址：
 
