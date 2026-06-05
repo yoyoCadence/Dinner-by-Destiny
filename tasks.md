@@ -20,6 +20,7 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## Done
 
+- [x] Configure GitHub Pages deployment for the static PWA
 - [x] Capture initial project context in `AGENTS.md` and seed the first planning task board
 - [x] Connect this local folder to the GitHub repo `yoyoCadence/Dinner-by-Destiny` and establish a clean `main` baseline
 - [x] Inspect and apply the reusable PWA baseline from `晚餐選擇.zip` without overwriting collaboration files
