@@ -1,0 +1,19 @@
+{
+  "name": "今晚吃命",
+  "short_name": "今晚吃命",
+  "description": "匯入 Google Maps 餐廳紀錄，用骰子、拉霸、抽卡幫你決定今天吃哪間。",
+  "lang": "zh-Hant",
+  "dir": "ltr",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6ECDD",
+  "theme_color": "#E8853B",
+  "categories": ["food", "lifestyle", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
