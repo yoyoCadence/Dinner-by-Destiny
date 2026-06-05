@@ -1,0 +1,11 @@
+{
+  "name": "dinner-by-destiny",
+  "version": "0.1.0",
+  "private": true,
+  "description": "今晚吃命：mobile-first PWA for choosing meals from imported Google Maps records.",
+  "scripts": {
+    "start": "node scripts/serve-static.mjs",
+    "test": "node tests/smoke.mjs"
+  },
+  "devDependencies": {}
+}
