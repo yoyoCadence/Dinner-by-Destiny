@@ -33,6 +33,20 @@ npm run test
 
 目前 smoke test 會確認主要 PWA 檔案存在、`index.html` 有載入核心腳本、Service Worker 快取清單沒有指向不存在的檔案，以及 manifest 名稱和 standalone 設定正確。
 
+## 部署
+
+GitHub Pages 會在 `main` 更新時自動部署：
+
+```bash
+npm run build:pages
+```
+
+正式網址：
+
+```text
+https://yoyocadence.github.io/Dinner-by-Destiny/
+```
+
 ## 架構
 
 這是一個無打包工具的 React PWA 原型：
