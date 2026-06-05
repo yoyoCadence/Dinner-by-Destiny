@@ -5,7 +5,7 @@
   "description": "今晚吃命：mobile-first PWA for choosing meals from imported Google Maps records.",
   "scripts": {
     "start": "node scripts/serve-static.mjs",
-    "test": "node tests/smoke.mjs"
+    "test": "node tests/run-all.mjs"
   },
   "devDependencies": {}
 }
