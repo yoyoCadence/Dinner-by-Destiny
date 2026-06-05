@@ -6,6 +6,7 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## Next
 
+- [ ] Add first-run onboarding tutorial explaining what the app does, why users should import Google Maps restaurant data, where to export that data from Google Maps, how to import it into this app, and add a Settings action to reopen the tutorial later
 - [ ] Verify the PWA manually in a browser after starting the local server with `npm.cmd run start`
 - [ ] Add import parser unit tests using sanitized Google Maps-style fixtures
 - [ ] Add app-state export/import backup before backend sync
