@@ -12,8 +12,6 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## In Progress
 
-- [ ] Connect this local folder to the GitHub repo `yoyoCadence/Dinner-by-Destiny` and establish a clean `main` baseline
-
 ## Backlog
 
 - [ ] Create an approved migration plan for future changes beyond the imported baseline
@@ -23,6 +21,7 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 ## Done
 
 - [x] Capture initial project context in `AGENTS.md` and seed the first planning task board
+- [x] Connect this local folder to the GitHub repo `yoyoCadence/Dinner-by-Destiny` and establish a clean `main` baseline
 - [x] Inspect and apply the reusable PWA baseline from `晚餐選擇.zip` without overwriting collaboration files
 - [x] Rename app branding and user-facing identity to `今晚吃命`
 - [x] Build the mobile-first installable app / PWA shell
