@@ -4,6 +4,8 @@
 
 目前 baseline 來自既有可用原型 `晚餐選擇.zip`，已改名為「今晚吃命」並整理成可延續開發的專案根目錄。
 
+`data.js` 只保留可公開的 demo 餐廳資料。自己的 Google Maps 匯出檔、匯入樣本、評論紀錄與地點歷史不要提交到 repo。
+
 ## 功能現況
 
 - 探索餐廳：搜尋、距離排序、半徑滑桿、料理篩選、一鍵開 Google Maps
@@ -56,3 +58,5 @@ npm run test
 - 隱私與 row-level access policy
 
 Supabase 是已知候選，但正式接後端前要先完成資料模型與安全規則規劃。
+
+目前建議方向記錄在 `docs/backend-direction.md`，Google Maps 匯入資料模型記錄在 `docs/google-maps-import-data-model.md`。

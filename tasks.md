@@ -6,9 +6,9 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## Next
 
-- [ ] Decide backend direction, including Supabase vs alternatives, auth needs, privacy model, and data ownership rules
-- [ ] Draft the Google Maps import data model for places, categories, visit records, filters, and random-selection inputs
 - [ ] Verify the PWA manually in a browser after starting the local server with `npm.cmd run start`
+- [ ] Add import parser unit tests using sanitized Google Maps-style fixtures
+- [ ] Add app-state export/import backup before backend sync
 
 ## In Progress
 
@@ -28,3 +28,5 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 - [x] Implement baseline Google Maps export import and normalization
 - [x] Add baseline game-style randomizers: slot machine, dice, and card draw
 - [x] Add verification commands for local serving and smoke checks
+- [x] Decide backend direction, including Supabase vs alternatives, auth needs, privacy model, and data ownership rules
+- [x] Draft the Google Maps import data model for places, categories, visit records, filters, and random-selection inputs
