@@ -1,5 +1,5 @@
 import { createReadStream, existsSync, statSync } from 'node:fs';
-import { extname, join, normalize, resolve } from 'node:path';
+import { extname, isAbsolute, relative, resolve } from 'node:path';
 import { createServer } from 'node:http';
 
 const root = resolve('.');
@@ -17,10 +17,11 @@ const mimeTypes = {
 };
 
 function resolveRequestPath(urlPath) {
-  const cleanPath = decodeURIComponent(urlPath.split('?')[0]);
-  const requested = cleanPath === '/' ? '/index.html' : cleanPath;
-  const absolute = resolve(join(root, normalize(requested)));
-  if (!absolute.startsWith(root)) return null;
+  const cleanPath = decodeURIComponent(urlPath.split('?')[0]).replace(/^\/+/, '');
+  const requested = cleanPath === '' ? 'index.html' : cleanPath;
+  const absolute = resolve(root, requested);
+  const rootRelative = relative(root, absolute);
+  if (rootRelative.startsWith('..') || isAbsolute(rootRelative)) return null;
   return absolute;
 }
 

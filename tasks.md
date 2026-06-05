@@ -7,7 +7,6 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 ## Next
 
 - [ ] Verify the PWA manually in a browser after starting the local server with `npm.cmd run start`
-- [ ] Add import parser unit tests using sanitized Google Maps-style fixtures
 - [ ] Add app-state export/import backup before backend sync
 
 ## In Progress
@@ -30,3 +29,5 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 - [x] Add verification commands for local serving and smoke checks
 - [x] Decide backend direction, including Supabase vs alternatives, auth needs, privacy model, and data ownership rules
 - [x] Draft the Google Maps import data model for places, categories, visit records, filters, and random-selection inputs
+- [x] Add import parser unit tests using sanitized Google Maps-style fixtures
+- [x] Add broader Node coverage for demo data, docs, privacy boundaries, PWA structure, static server behavior, store operations, and theme helpers
