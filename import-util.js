@@ -138,9 +138,36 @@
     return out;
   }
 
+  function mergeRestaurantLists(lists) {
+    var byId = {};
+    (lists || []).forEach(function (list) {
+      (list || []).forEach(function (r) {
+        if (!r || !r.id) return;
+        var old = byId[r.id];
+        if (!old) {
+          byId[r.id] = Object.assign({}, r);
+          return;
+        }
+        byId[r.id] = Object.assign({}, old, r, {
+          confidence: old.confidence === 'food' || r.confidence === 'food' ? 'food' : (old.confidence || r.confidence),
+          cuisine: old.cuisine && old.cuisine !== 'unknown' ? old.cuisine : r.cuisine,
+          price: Math.max(old.price || 0, r.price || 0) || 1,
+          rating: Math.max(old.rating || 0, r.rating || 0),
+          eatCount: Math.max(old.eatCount || 0, r.eatCount || 0),
+          lastEaten: [old.lastEaten, r.lastEaten].filter(Boolean).sort().pop() || '',
+          tags: Array.from(new Set([].concat(old.tags || [], r.tags || []))),
+          blurb: (old.blurb || '').length >= (r.blurb || '').length ? old.blurb : r.blurb,
+          excludedUntil: old.excludedUntil || r.excludedUntil || null,
+        });
+      });
+    });
+    return Object.keys(byId).map(function (id) { return byId[id]; });
+  }
+
   window.GMImport = {
     guessCuisine: guessCuisine, isFood: isFood, cleanName: cleanName, cityFromAddr: cityFromAddr,
     idFromName: idFromName, priceFromQuestions: priceFromQuestions, hasSpendQuestion: hasSpendQuestion,
     classifyPlace: classifyPlace, eatCountFromText: eatCountFromText, parseGeoJSON: parseGeoJSON,
+    mergeRestaurantLists: mergeRestaurantLists,
   };
 })();

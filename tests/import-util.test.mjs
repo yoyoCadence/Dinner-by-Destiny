@@ -76,6 +76,17 @@ const sameNameBranches = gm.parseGeoJSON({
 assert.equal(sameNameBranches.length, 2, 'same-name places at different addresses should both import');
 assert.notEqual(sameNameBranches[0].id, sameNameBranches[1].id);
 
+const mergedLists = gm.mergeRestaurantLists([
+  [{ id: 'same-place', name: '同一家', cuisine: 'unknown', confidence: 'maybe', price: 1, rating: 0, eatCount: 0, lastEaten: '', tags: ['saved'], blurb: '' }],
+  [{ id: 'same-place', name: '同一家', cuisine: 'noodle', confidence: 'food', price: 2, rating: 5, eatCount: 3, lastEaten: '2026-06-01', tags: ['review'], blurb: '有評論摘要' }],
+]);
+assert.equal(mergedLists.length, 1, 'multi-file import should merge duplicate places');
+assert.equal(mergedLists[0].confidence, 'food');
+assert.equal(mergedLists[0].cuisine, 'noodle');
+assert.equal(mergedLists[0].rating, 5);
+assert.equal(mergedLists[0].eatCount, 3);
+assert.equal(JSON.stringify(mergedLists[0].tags.sort()), JSON.stringify(['review', 'saved']));
+
 assert.equal(gm.parseGeoJSON(null).length, 0);
 assert.equal(gm.parseGeoJSON({ type: 'FeatureCollection', features: [] }).length, 0);
 
