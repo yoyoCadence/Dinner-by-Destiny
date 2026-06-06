@@ -10,6 +10,7 @@ function fakeImport(current) {
     { id: 'gmA', name: 'A 餐廳（測試）', cuisine: 'noodle', confidence: 'food', price: 2, rating: 4, lat: 25.05, lng: 121.52, city: '台北', addr: '台北市測試路 A 號', eatCount: 0, lastEaten: '', dineIn: true, tags: ['測試'], blurb: '匯入測試用的 A 餐廳。' },
     { id: 'gmB', name: 'B 餐廳（測試）', cuisine: 'snack', confidence: 'food', price: 1, rating: 5, lat: 24.99, lng: 121.30, city: '桃園', addr: '桃園市測試路 B 號', eatCount: 0, lastEaten: '', dineIn: true, tags: ['測試'], blurb: '匯入測試用的 B 餐廳。' },
     { id: 'gmC', name: 'C 神祕小店（測試）', cuisine: 'unknown', confidence: 'maybe', price: 1, rating: 4, lat: 25.10, lng: 121.55, city: '台北', addr: '台北市測試路 C 號', eatCount: 0, lastEaten: '', dineIn: true, tags: ['測試'], blurb: '沒有食物訊號，不確定是不是餐廳。' },
+    { id: 'gmD', name: 'D 公園（測試）', cuisine: 'unknown', confidence: 'skip', price: 1, rating: 0, lat: 25.11, lng: 121.56, city: '台北', addr: '台北市測試路 D 號', eatCount: 0, lastEaten: '', dineIn: true, tags: ['測試'], blurb: '', importReason: '像景點或設施，且沒有餐飲訊號' },
   ]);
 }
 
@@ -23,15 +24,16 @@ function diffImport(current, imported) {
   return { add: add, remove: remove };
 }
 
-function Row({ r, checked, onToggle, danger, cuisine, onCuisine }) {
+function Row({ r, checked, onToggle, danger, cuisine, onCuisine, muted }) {
   const cz = window.cuisineOf(cuisine || r.cuisine);
   const isUnknown = (cuisine || r.cuisine) === 'unknown';
-  return React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, background: isUnknown ? 'var(--accent-soft)' : 'var(--surface)', border: '1px solid ' + (isUnknown ? 'var(--accent)' : 'var(--line)'), cursor: 'pointer' } },
+  return React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, background: isUnknown ? 'var(--accent-soft)' : 'var(--surface)', border: '1px solid ' + (isUnknown ? 'var(--accent)' : 'var(--line)'), opacity: muted && !checked ? 0.82 : 1, cursor: 'pointer' } },
     React.createElement('input', { type: 'checkbox', checked: checked, onChange: onToggle, style: { width: 18, height: 18, accentColor: danger ? '#d9534f' : 'var(--accent)', flexShrink: 0 } }),
     React.createElement('span', { style: { fontSize: 22, flexShrink: 0 } }, cz.emoji),
     React.createElement('div', { style: { flex: 1, minWidth: 0 } },
       React.createElement('div', { style: { fontSize: 14.5, fontWeight: 700, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, r.name),
-      React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)' } }, (r.city || '其他') + ' · ' + cz.label + (r.rating ? ' · ★' + r.rating : ''))
+      React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)' } }, (r.city || '其他') + ' · ' + cz.label + (r.rating ? ' · ★' + r.rating : '') + (r.mapUrl ? ' · Google Maps' : '')),
+      r.importReason && React.createElement('div', { style: { fontSize: 11.5, color: muted ? '#a65f2b' : 'var(--ink-soft)', marginTop: 2 } }, r.importReason)
     ),
     onCuisine && React.createElement(window.CuisinePicker, { value: cuisine || r.cuisine, compact: true, onChange: onCuisine })
   );
@@ -50,10 +52,11 @@ function ImportSheet({ store, onClose }) {
   const [addSel, setAddSel] = useState({});
   const [rmSel, setRmSel] = useState({});
   const [cuisineMap, setCuisineMap] = useState({}); // id → 使用者選的分類
+  const [showSkipped, setShowSkipped] = useState(false);
 
   const startReview = function (list) {
     const d = diffImport(current, list);
-    const a = {}; d.add.forEach(function (r) { a[r.id] = r.confidence !== 'maybe'; }); // 不確定的預設不勾
+    const a = {}; d.add.forEach(function (r) { a[r.id] = r.confidence === 'food'; }); // 不確定與排除項預設不勾
     const rm = {}; d.remove.forEach(function (r) { rm[r.id] = true; });
     const cm = {}; d.add.forEach(function (r) { cm[r.id] = r.cuisine; });
     setImported(list); setAddSel(a); setRmSel(rm); setCuisineMap(cm); setErr(''); setStage('review');
@@ -79,7 +82,7 @@ function ImportSheet({ store, onClose }) {
     if (!files.length) return;
     Promise.all(files.map(readJsonFile)).then(function (jsonList) {
       try {
-        const parsedLists = jsonList.map(function (json) { return window.GMImport.parseGeoJSON(json); });
+        const parsedLists = jsonList.map(function (json) { return window.GMImport.parseGeoJSON(json, { includeNonFood: true }); });
         const list = window.GMImport.mergeRestaurantLists(parsedLists);
         if (!list.length) { setErr('檔案裡找不到可匯入的地點（需 Google Maps 匯出的 GeoJSON）。'); return; }
         startReview(list);
@@ -91,7 +94,7 @@ function ImportSheet({ store, onClose }) {
 
   const apply = function () {
     const addList = diff.add.filter(function (r) { return addSel[r.id]; })
-      .map(function (r) { return Object.assign({}, r, { cuisine: cuisineMap[r.id] || r.cuisine }); });
+      .map(function (r) { return Object.assign({}, r, { cuisine: cuisineMap[r.id] || r.cuisine, confidence: 'food' }); });
     const removeIds = diff.remove.filter(function (r) { return rmSel[r.id]; }).map(function (r) { return r.id; });
     store.applyImport(addList, removeIds);
     onClose();
@@ -111,8 +114,10 @@ function ImportSheet({ store, onClose }) {
     );
   }
 
-  const foods = diff.add.filter(function (r) { return r.confidence !== 'maybe'; });
+  const foods = diff.add.filter(function (r) { return r.confidence === 'food'; });
   const maybes = diff.add.filter(function (r) { return r.confidence === 'maybe'; });
+  const skipped = diff.add.filter(function (r) { return r.confidence === 'skip'; });
+  const visibleSkipped = showSkipped ? skipped : skipped.slice(0, 5);
   const nAdd = diff.add.filter(function (r) { return addSel[r.id]; }).length;
   const nRm = diff.remove.filter(function (r) { return rmSel[r.id]; }).length;
   const nUnknown = diff.add.filter(function (r) { return addSel[r.id] && (cuisineMap[r.id] || r.cuisine) === 'unknown'; }).length;
@@ -138,6 +143,21 @@ function ImportSheet({ store, onClose }) {
         )
       ),
       React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, maybes.map(addRow))
+    ),
+    skipped.length > 0 && React.createElement('div', null,
+      React.createElement('div', { style: { display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--line)', marginBottom: 8 } },
+        React.createElement('span', { style: { fontSize: 22, flexShrink: 0 } }, '🚫'),
+        React.createElement('div', { style: { fontSize: 12.5, color: 'var(--ink)', lineHeight: 1.6 } },
+          React.createElement('b', null, '有 ' + skipped.length + ' 筆被判定不是餐廳'),
+          '。這些會預設不匯入；若分類錯了，勾選後會以餐廳加入。'
+        )
+      ),
+      React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
+        visibleSkipped.map(function (r) {
+          return React.createElement(Row, { key: r.id, r: r, checked: !!addSel[r.id], muted: true, cuisine: cuisineMap[r.id] || r.cuisine, onCuisine: function (v) { setCuisineMap(function (s) { const n = Object.assign({}, s); n[r.id] = v; return n; }); }, onToggle: function () { setAddSel(function (s) { const n = Object.assign({}, s); n[r.id] = !n[r.id]; return n; }); } });
+        })
+      ),
+      skipped.length > 5 && React.createElement('button', { onClick: function () { setShowSkipped(function (v) { return !v; }); }, style: { width: '100%', marginTop: 8, padding: '11px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 13, fontWeight: 800, cursor: 'pointer' } }, showSkipped ? '收合非餐廳清單' : '展開全部 ' + skipped.length + ' 筆')
     ),
     nUnknown > 0 && React.createElement('div', { style: { display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--line)' } },
       React.createElement('span', { style: { fontSize: 20, flexShrink: 0 } }, '🏷️'),
