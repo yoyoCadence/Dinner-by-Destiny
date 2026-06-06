@@ -120,8 +120,22 @@ function renderFreshStore(options) {
         excludedUntil: '2026-02-03',
       },
       {
+        id: 'imported-restaurant',
+        name: '匯入餐廳應保留',
+        cuisine: 'snack',
+        price: 1,
+        rating: 4.1,
+        lat: 25.02,
+        lng: 121.45,
+        city: '新北',
+        addr: '新北市測試路 1 號',
+        eatCount: 2,
+        lastEaten: '2026-03-04',
+        excludedUntil: null,
+      },
+      {
         id: 'stale-restaurant',
-        name: '舊資料應移除',
+        name: '缺少座標的舊資料應移除',
       },
     ],
     diary: [{ id: 'd1', name: '保留日記' }],
@@ -131,13 +145,17 @@ function renderFreshStore(options) {
   };
   const { env, store } = renderFreshStore({ storedState });
   const migrated = store.state.restaurants.find((r) => r.id === seed.id);
-  assert.equal(store.state.restaurants.length, env.window.SEED_RESTAURANTS.length);
+  const imported = store.state.restaurants.find((r) => r.id === 'imported-restaurant');
+  assert.equal(store.state.restaurants.length, env.window.SEED_RESTAURANTS.length + 1);
   assert.equal(migrated.name, seed.name);
   assert.equal(migrated.lat, seed.lat);
   assert.equal(migrated.eatCount, 9);
   assert.equal(migrated.rating, 2.2);
   assert.equal(migrated.lastEaten, '2026-01-02');
   assert.equal(migrated.excludedUntil, '2026-02-03');
+  assert.ok(imported, 'migrate should preserve complete imported restaurants');
+  assert.equal(imported.name, '匯入餐廳應保留');
+  assert.equal(imported.eatCount, 2);
   assert.equal(store.state.restaurants.some((r) => r.id === 'stale-restaurant'), false);
   assert.equal(store.state.diary[0].name, '保留日記');
   assert.equal(store.state.settings.theme, 'dark');
@@ -161,6 +179,25 @@ function renderFreshStore(options) {
   assert.equal(eatCount, 0, 'eatCount should not go below 0');
 }
 
+// updateDiary：更改日期時同步餐廳 lastEaten
+{
+  const { env, store } = renderFreshStore();
+  const target = store.state.restaurants[0];
+  store.logMeal({
+    restId: target.id,
+    name: target.name,
+    cuisine: target.cuisine,
+    price: target.price,
+    date: '2026-06-05',
+    mood: 'good',
+  });
+  let next = env.renderStore().state;
+  env.renderStore().updateDiary(next.diary[0].id, { date: '2026-06-01' });
+  next = env.renderStore().state;
+  assert.equal(next.diary[0].date, '2026-06-01');
+  assert.equal(next.restaurants.find((r) => r.id === target.id).lastEaten, '2026-06-01');
+}
+
 // applyImport 傳入空陣列不應改變餐廳數量
 {
   const { env, store } = renderFreshStore();
@@ -171,9 +208,10 @@ function renderFreshStore(options) {
 
 // applyImport 傳入 null 不應崩潰
 {
-  const { store } = renderFreshStore();
+  const { env, store } = renderFreshStore();
   const initialCount = store.state.restaurants.length;
   store.applyImport(null, null);
+  assert.equal(env.renderStore().state.restaurants.length, initialCount, 'null import should be a no-op');
 }
 
 // isSnoozed：各種邊界條件

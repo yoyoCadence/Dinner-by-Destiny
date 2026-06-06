@@ -26,7 +26,7 @@
 - `App.jsx` 呼叫一次 `useStore()`，把 `store` 往下傳給每個畫面。
 - `store` 提供：`state`、`setSetting(k,v)`、`logMeal(entry)`、`deleteDiary(id)`、`snooze(id,days)`、`unsnooze(id)`、`setRating(id,n)`、`resetAll()`。
 - `state` 形狀：`{ restaurants[], diary[], settings{theme,radius,layout,diceStyle}, friends[] }`。
-- `store.jsx` 有 `migrate()`：載入舊 localStorage 時，會用 `data.js` 最新的靜態欄位（座標、店名…）覆寫，但保留使用者資料（eatCount、rating、lastEaten、diary）。**改了 `data.js` 的座標/店名後**靠這個生效。
+- `store.jsx` 有 `migrate()`：載入舊 localStorage 時，會用 `data.js` 最新的靜態欄位（座標、店名…）覆寫 demo seed 餐廳，但保留使用者資料（eatCount、rating、lastEaten、diary）與使用者匯入的非 seed 餐廳。**改了 `data.js` 的座標/店名後**靠這個生效。
 
 ## 主題
 

@@ -181,7 +181,7 @@ import_batches (
 
 ## Risks
 
-- Name-derived ids can collide when two places have the same cleaned name.
+- Import ids are derived from cleaned names for compatibility, with address-derived fallback ids when same-name places have different addresses. Same-name places with missing/identical addresses can still collide.
 - Raw review text can reveal habits and should not be synced by default.
 - Coordinates and timestamps are sensitive even without review text.
 - Removing a place during re-import may delete user edits if the diff model is too aggressive.

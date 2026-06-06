@@ -102,6 +102,7 @@
     opts = opts || {};
     var feats = (json && json.features) || [];
     var seen = {};
+    var seenIdentity = {};
     var out = [];
     for (var i = 0; i < feats.length; i++) {
       var f = feats[i];
@@ -114,9 +115,13 @@
       var conf = classifyPlace(name, p);
       if (conf === 'skip' && !opts.includeNonFood) continue;
       var disp = cleanName(name);
-      var id = idFromName(disp);
+      var identity = disp + '|' + (loc.address || coords.join(','));
+      if (seenIdentity[identity]) continue;
+      var baseId = idFromName(disp);
+      var id = seen[baseId] && seen[baseId] !== identity ? idFromName(identity) : baseId;
       if (seen[id]) continue;
-      seen[id] = 1;
+      seen[id] = identity;
+      seenIdentity[identity] = 1;
       var review = p.review_text_published || '';
       out.push({
         id: id, name: disp, cuisine: guessCuisine(disp), confidence: conf,

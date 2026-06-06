@@ -134,9 +134,15 @@ window.openMaps = function (r) {
 };
 
 // 日期工具
+window.dateStr = function (d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 window.todayStr = function () {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
+  return window.dateStr(new Date());
 };
 window.daysAgo = function (str) {
   if (!str) return 999;

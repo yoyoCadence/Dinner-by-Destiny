@@ -3,6 +3,33 @@ const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
 const STORE_KEY = 'dinner_by_destiny_v1';
 
+function normalizeUserRestaurant(r) {
+  if (!r || !r.id || !r.name || typeof r.lat !== 'number' || typeof r.lng !== 'number') return null;
+  return {
+    cuisine: 'unknown',
+    price: 1,
+    rating: 0,
+    city: '其他',
+    addr: '',
+    eatCount: 0,
+    lastEaten: '',
+    dineIn: true,
+    tags: [],
+    blurb: '',
+    excludedUntil: null,
+    ...r,
+    excludedUntil: r.excludedUntil || null,
+  };
+}
+
+function latestDiaryDateFor(diary, restId) {
+  return diary
+    .filter((d) => d.restId === restId && d.date)
+    .map((d) => d.date)
+    .sort()
+    .pop() || '';
+}
+
 function loadStore() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
@@ -20,7 +47,7 @@ function migrate(s) {
   window.SEED_RESTAURANTS.forEach((r) => { seedById[r.id] = r; });
   const savedById = {};
   s.restaurants.forEach((r) => { savedById[r.id] = r; });
-  s.restaurants = window.SEED_RESTAURANTS.map((seed) => {
+  const migratedSeeds = window.SEED_RESTAURANTS.map((seed) => {
     const old = savedById[seed.id] || {};
     return {
       ...seed,
@@ -30,6 +57,11 @@ function migrate(s) {
       excludedUntil: old.excludedUntil || null,
     };
   });
+  const imported = s.restaurants
+    .filter((r) => !seedById[r.id])
+    .map(normalizeUserRestaurant)
+    .filter(Boolean);
+  s.restaurants = migratedSeeds.concat(imported);
   return s;
 }
 
@@ -106,10 +138,22 @@ function useStore() {
 
   // 編輯一筆日記（日期、金額、心情、備註…）
   const updateDiary = useCallback((id, patch) => {
-    setState((s) => ({
-      ...s,
-      diary: s.diary.map((d) => (d.id === id ? Object.assign({}, d, patch) : d)),
-    }));
+    setState((s) => {
+      const old = s.diary.find((d) => d.id === id);
+      const diary = s.diary.map((d) => (d.id === id ? Object.assign({}, d, patch) : d));
+      let restaurants = s.restaurants;
+      if (old && old.restId && patch.date && patch.date !== old.date) {
+        restaurants = s.restaurants.map((r) => {
+          if (r.id !== old.restId) return r;
+          const latest = latestDiaryDateFor(diary, old.restId);
+          if (r.lastEaten === old.date || patch.date > (r.lastEaten || '')) {
+            return { ...r, lastEaten: latest || patch.date };
+          }
+          return r;
+        });
+      }
+      return { ...s, diary, restaurants };
+    });
   }, []);
 
   // 修改餐廳分類（待分類 → 指定類別，匯入後可改）
@@ -122,7 +166,7 @@ function useStore() {
 
   // 最近吃膩了：排除 N 天
   const snooze = useCallback((restId, days) => {
-    const until = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+    const until = window.dateStr(new Date(Date.now() + days * 86400000));
     setState((s) => ({
       ...s,
       restaurants: s.restaurants.map((r) => (r.id === restId ? { ...r, excludedUntil: until } : r)),

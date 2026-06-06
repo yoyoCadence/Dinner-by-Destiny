@@ -33,6 +33,26 @@ assert.ok(openedUrls[0].url.includes(encodeURIComponent('命運牛肉麵 台北'
 
 assert.match(window.todayStr(), /^\d{4}-\d{2}-\d{2}$/);
 assert.equal(window.fmtAgo(window.todayStr()), '今天');
+assert.equal(window.dateStr(new Date(2026, 0, 2)), '2026-01-02');
+
+class FixedLocalDate extends Date {
+  constructor(...args) {
+    super(args.length ? args[0] : '2026-06-05T16:30:00.000Z');
+  }
+
+  getFullYear() { return 2026; }
+  getMonth() { return 5; }
+  getDate() { return 6; }
+
+  static now() {
+    return new Date('2026-06-05T16:30:00.000Z').getTime();
+  }
+}
+
+{
+  const { window: fixedWindow } = loadBrowserFiles(['data.js', 'theme.js'], { Date: FixedLocalDate });
+  assert.equal(fixedWindow.todayStr(), '2026-06-06', 'todayStr should use local date fields, not UTC ISO date');
+}
 
 // 輔助：N 天前的日期字串
 function daysAgoStr(n) {

@@ -18,7 +18,7 @@ assert.ok(model.includes('MealLog'));
 assert.ok(model.includes('Import Pipeline'));
 assert.ok(model.includes('places ('));
 assert.ok(model.includes('meal_logs ('));
-assert.ok(model.includes('Name-derived ids can collide'));
+assert.ok(model.includes('with address-derived fallback ids'));
 
 assert.ok(readme.includes('Google Maps 匯出檔'));
 assert.ok(readme.includes('docs/backend-direction.md'));
