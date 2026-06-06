@@ -6,6 +6,8 @@ const sw = readFileSync('sw.js', 'utf8');
 const manifest = JSON.parse(readFileSync('manifest.webmanifest', 'utf8'));
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const gitignore = readFileSync('.gitignore', 'utf8');
+const agents = readFileSync('AGENTS.md', 'utf8');
+const deployWorkflow = readFileSync('.github/workflows/deploy-pages.yml', 'utf8');
 
 const expectedScriptOrder = [
   'data.js',
@@ -40,6 +42,7 @@ assert.ok(!html.includes('晚餐選擇</title>'));
 const cacheMatch = sw.match(/const CACHE = '([^']+)'/);
 assert.ok(cacheMatch);
 assert.match(cacheMatch[1], /^dinner-by-destiny-v\d+$/);
+assert.ok(agents.includes(cacheMatch[1]), 'AGENTS.md cache note should match sw.js CACHE');
 assert.ok(!sw.includes('screens/Sheets.jsx'), 'service worker must not cache missing Sheets screen');
 
 const appShellBlock = sw.match(/const APP_SHELL = \[([\s\S]*?)\];/);
@@ -66,6 +69,9 @@ assert.ok(manifest.icons.some((icon) => icon.purpose === 'maskable'));
 assert.equal(pkg.private, true);
 assert.equal(pkg.scripts.start, 'node scripts/serve-static.mjs');
 assert.equal(pkg.scripts.test, 'node tests/run-all.mjs');
+assert.ok(deployWorkflow.includes('npm run test'), 'Pages workflow should run tests before deploying');
+assert.ok(deployWorkflow.includes('npm run build:pages'), 'Pages workflow should prepare the static artifact');
+assert.ok(deployWorkflow.includes('actions/deploy-pages'), 'Pages workflow should deploy through GitHub Pages');
 
 for (const ignored of ['.legacy_extract/', '*.zip', 'uploads/', '.env']) {
   assert.ok(gitignore.includes(ignored), `.gitignore should include ${ignored}`);

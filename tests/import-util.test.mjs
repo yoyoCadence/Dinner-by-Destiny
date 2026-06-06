@@ -66,6 +66,16 @@ const withSkipped = gm.parseGeoJSON({
 assert.equal(withSkipped.length, 1);
 assert.equal(withSkipped[0].confidence, 'skip');
 
+const sameNameBranches = gm.parseGeoJSON({
+  type: 'FeatureCollection',
+  features: [
+    placeFeature({ name: '命運牛肉麵', address: '100台灣台北市中正區一號店' }),
+    placeFeature({ name: '命運牛肉麵', address: '220台灣新北市板橋區二號店' }),
+  ],
+});
+assert.equal(sameNameBranches.length, 2, 'same-name places at different addresses should both import');
+assert.notEqual(sameNameBranches[0].id, sameNameBranches[1].id);
+
 assert.equal(gm.parseGeoJSON(null).length, 0);
 assert.equal(gm.parseGeoJSON({ type: 'FeatureCollection', features: [] }).length, 0);
 
