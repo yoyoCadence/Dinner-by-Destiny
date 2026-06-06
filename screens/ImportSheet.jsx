@@ -59,19 +59,34 @@ function ImportSheet({ store, onClose }) {
     setImported(list); setAddSel(a); setRmSel(rm); setCuisineMap(cm); setErr(''); setStage('review');
   };
 
+  const readJsonFile = function (file) {
+    return new Promise(function (resolve, reject) {
+      const reader = new FileReader();
+      reader.onload = function () {
+        try {
+          resolve(JSON.parse(reader.result));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  };
+
   const onFile = function (e) {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function () {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    Promise.all(files.map(readJsonFile)).then(function (jsonList) {
       try {
-        const json = JSON.parse(reader.result);
-        const list = window.GMImport.parseGeoJSON(json);
+        const parsedLists = jsonList.map(function (json) { return window.GMImport.parseGeoJSON(json); });
+        const list = window.GMImport.mergeRestaurantLists(parsedLists);
         if (!list.length) { setErr('檔案裡找不到可匯入的地點（需 Google Maps 匯出的 GeoJSON）。'); return; }
         startReview(list);
       } catch (e2) { setErr('檔案解析失敗，請確認是 Google Maps 匯出的 .json。'); }
-    };
-    reader.readAsText(file);
+    }).catch(function () {
+      setErr('檔案解析失敗，請確認每個檔案都是 Google Maps 匯出的 .json。');
+    });
   };
 
   const apply = function () {
@@ -84,11 +99,12 @@ function ImportSheet({ store, onClose }) {
 
   if (stage === 'pick') {
     return React.createElement('div', { style: { padding: '4px 4px 20px', display: 'flex', flexDirection: 'column', gap: 14 } },
-      React.createElement('p', { style: { margin: 0, fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.6 } }, '從 Google Maps 匯出「已儲存的地點」或「評論」的 .json 檔來更新清單。系統會自動分流：是餐廳的收錄、明顯是景點/設施的排除、不確定的列出來讓你勾選。再次匯入會比對差異，由你確認新增或刪除。'),
+      React.createElement('p', { style: { margin: 0, fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.6 } }, '從 Google Maps 匯出「已儲存的地點」和「評論」的 .json 檔來更新清單。可一次多選，系統會合併去重，再自動分流：是餐廳的收錄、明顯是景點/設施的排除、不確定的列出來讓你勾選。再次匯入會比對差異，由你確認新增或刪除。'),
       React.createElement('label', { style: { display: 'block', padding: '16px', borderRadius: 14, border: '2px dashed var(--line)', background: 'var(--surface)', textAlign: 'center', cursor: 'pointer' } },
         React.createElement('div', { style: { fontSize: 30, marginBottom: 6 } }, '📁'),
-        React.createElement('div', { style: { fontSize: 14, fontWeight: 700, color: 'var(--ink)' } }, '選擇 Google Maps .json 檔'),
-        React.createElement('input', { type: 'file', accept: '.json,application/json', onChange: onFile, style: { display: 'none' } })
+        React.createElement('div', { style: { fontSize: 14, fontWeight: 700, color: 'var(--ink)' } }, '選擇 Google Maps .json 檔（可多選）'),
+        React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 4 } }, '建議同時選「評論.json」與「已儲存的地點.json」'),
+        React.createElement('input', { type: 'file', accept: '.json,application/json', multiple: true, onChange: onFile, style: { display: 'none' } })
       ),
       React.createElement('button', { onClick: function () { startReview(fakeImport(current)); }, style: { padding: '13px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 700, cursor: 'pointer' } }, '🧪 用測試資料模擬匯入（A／B 餐廳）'),
       err && React.createElement('div', { style: { fontSize: 12.5, color: '#d9534f', fontWeight: 600 } }, err)

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 
 const html = readFileSync('index.html', 'utf8');
+const app = readFileSync('App.jsx', 'utf8');
+const importSheet = readFileSync('screens/ImportSheet.jsx', 'utf8');
 const sw = readFileSync('sw.js', 'utf8');
 const manifest = JSON.parse(readFileSync('manifest.webmanifest', 'utf8'));
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -37,6 +39,11 @@ for (const file of expectedScriptOrder) {
 assert.ok(html.includes('<meta name="apple-mobile-web-app-title" content="今晚吃命" />'));
 assert.ok(html.includes('<title>今晚吃命</title>'));
 assert.ok(html.includes('navigator.serviceWorker.register(\'sw.js\')'));
+assert.ok(html.includes('width: 100vw; height: 100dvh'), 'mobile viewport should not render inside the desktop phone frame');
+assert.ok(html.includes('@media (min-width: 640px)'), 'desktop phone frame should be limited to wide viewports');
+assert.ok(app.includes("width: '100%'"));
+assert.ok(app.includes("className: 'app-preview-chrome status'"));
+assert.ok(importSheet.includes('multiple: true'), 'Google Maps import input should allow selecting saved places and reviews together');
 assert.ok(!html.includes('晚餐選擇</title>'));
 
 const cacheMatch = sw.match(/const CACHE = '([^']+)'/);
