@@ -28,7 +28,7 @@ function renderFreshStore(options) {
     price: target.price,
     date: '2026-06-05',
     cost: 220,
-    mood: 'happy',
+    mood: 'good',
     note: '測試紀錄',
   });
 
@@ -143,6 +143,52 @@ function renderFreshStore(options) {
   assert.equal(store.state.settings.theme, 'dark');
   assert.equal(store.state.settings.radius, 1200);
   assert.equal(store.state.settings.diceStyle, 'dice');
+}
+
+// deleteDiary：eatCount 已是 0 時不應跌破 0
+{
+  const seedId = createStoreHarness().window.SEED_RESTAURANTS[0].id;
+  const storedState = {
+    restaurants: [{ id: seedId, eatCount: 0 }],
+    diary: [{ id: 'dx1', date: '2026-01-01', restId: seedId, name: '測試', cuisine: null, price: null, cost: null, mood: 'good', note: '' }],
+    settings: { theme: 'warm', radius: 1200, noRadius: true, city: 'all', layout: 'card', diceStyle: 'dice' },
+    friends: [],
+    onboarded: true,
+  };
+  const { env, store } = renderFreshStore({ storedState });
+  store.deleteDiary('dx1');
+  const eatCount = env.renderStore().state.restaurants.find((r) => r.id === seedId).eatCount;
+  assert.equal(eatCount, 0, 'eatCount should not go below 0');
+}
+
+// applyImport 傳入空陣列不應改變餐廳數量
+{
+  const { env, store } = renderFreshStore();
+  const initialCount = store.state.restaurants.length;
+  store.applyImport([], []);
+  assert.equal(env.renderStore().state.restaurants.length, initialCount, 'empty import should be a no-op');
+}
+
+// applyImport 傳入 null 不應崩潰
+{
+  const { store } = renderFreshStore();
+  const initialCount = store.state.restaurants.length;
+  store.applyImport(null, null);
+}
+
+// isSnoozed：各種邊界條件
+{
+  const { env } = renderFreshStore();
+  const { window } = env;
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const today = window.todayStr();
+
+  assert.ok(!window.isSnoozed({ excludedUntil: null }), 'null excludedUntil = not snoozed');
+  assert.ok(!window.isSnoozed({ excludedUntil: '' }), 'empty string = not snoozed');
+  assert.ok(window.isSnoozed({ excludedUntil: tomorrow }), 'future date = snoozed');
+  assert.ok(!window.isSnoozed({ excludedUntil: yesterday }), 'past date = snooze expired');
+  assert.ok(!window.isSnoozed({ excludedUntil: today }), 'today = snooze expired (daysAgo=0, not < 0)');
 }
 
 console.log('Store tests passed.');

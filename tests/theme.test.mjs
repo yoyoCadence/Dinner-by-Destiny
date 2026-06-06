@@ -34,4 +34,22 @@ assert.ok(openedUrls[0].url.includes(encodeURIComponent('命運牛肉麵 台北'
 assert.match(window.todayStr(), /^\d{4}-\d{2}-\d{2}$/);
 assert.equal(window.fmtAgo(window.todayStr()), '今天');
 
+// 輔助：N 天前的日期字串
+function daysAgoStr(n) {
+  return new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+}
+
+// daysAgo
+assert.equal(window.daysAgo(''), 999, 'empty string → 999');
+assert.equal(window.daysAgo(null), 999, 'null → 999');
+assert.equal(window.daysAgo(window.todayStr()), 0, 'today → 0');
+assert.equal(window.daysAgo(daysAgoStr(1)), 1, '1 day ago → 1');
+assert.equal(window.daysAgo(daysAgoStr(10)), 10, '10 days ago → 10');
+
+// fmtAgo — 歷史日期
+assert.equal(window.fmtAgo(daysAgoStr(1)), '昨天');
+assert.equal(window.fmtAgo(daysAgoStr(3)), '3 天前');
+assert.equal(window.fmtAgo(daysAgoStr(8)), '1 週前');
+assert.equal(window.fmtAgo(daysAgoStr(35)), '1 個月前');
+
 console.log('Theme helper tests passed.');

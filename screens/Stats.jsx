@@ -1,6 +1,4 @@
 /* 統計頁 — 本月吃最多/最少、花費、口味分布 */
-const { Icons } = window;
-const { useMemo } = React;
 
 function Bar({ label, emoji, value, max, accent }) {
   return React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },

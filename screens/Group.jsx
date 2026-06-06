@@ -2,9 +2,9 @@
 const { Icons } = window;
 const { useState, useEffect, useRef } = React;
 
-function pickThreeG(restaurants, radius) {
+function pickThreeG(restaurants, radius, noRadius) {
   const pool = restaurants.map((r) => ({ r, dist: window.distM(window.HOME_LOC, r) }))
-    .filter(({ r, dist }) => dist <= radius && !window.isSnoozed(r));
+    .filter(({ r, dist }) => (noRadius || dist <= radius) && !window.isSnoozed(r));
   const a = pool.slice();
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a.slice(0, Math.min(3, a.length));
@@ -16,7 +16,7 @@ const btnS = { flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid 
 
 function Group({ store, onClose, onPick }) {
   const { state } = store;
-  const { radius } = state.settings;
+  const { radius, noRadius } = state.settings;
   const [stage, setStage] = useState('lobby');
   const [joined, setJoined] = useState(state.friends.map((f) => f.id));
   const [cands, setCands] = useState([]);
@@ -27,7 +27,7 @@ function Group({ store, onClose, onPick }) {
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   const start = () => {
-    const c = pickThreeG(state.restaurants, radius);
+    const c = pickThreeG(state.restaurants, radius, noRadius);
     if (c.length < 2) { alert('此範圍可選餐廳太少，先到探索頁拉大範圍'); return; }
     setCands(c); setVotes({}); setStage('vote');
     state.friends.filter((f) => joined.includes(f.id)).forEach((f, i) => {
@@ -136,3 +136,4 @@ function Group({ store, onClose, onPick }) {
 }
 
 window.Group = Group;
+window.pickThreeG = pickThreeG;
