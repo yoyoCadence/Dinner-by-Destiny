@@ -6,6 +6,7 @@ export function placeFeature({
   rating = 4,
   date = '2026-06-05T12:34:56Z',
   review = '',
+  mapsUrl = 'https://maps.google.com/?cid=sanitized',
   questions = [],
 }) {
   return {
@@ -14,6 +15,7 @@ export function placeFeature({
     properties: {
       date,
       five_star_rating_published: rating,
+      google_maps_url: mapsUrl,
       review_text_published: review,
       questions,
       location: { name, address },
@@ -27,7 +29,8 @@ export const sanitizedFeatureCollection = {
     placeFeature({
       name: '命運牛肉麵｜分店備註',
       questions: [{ question: '平均每人消費金額', selected_option: '$200–400' }],
-      review: '吃三次，湯很暖。',
+      review: '吃三次，湯很暖。\n第二行完整評論也要保留，不能只剩摘要。',
+      mapsUrl: 'https://maps.google.com/?cid=noodle',
     }),
     placeFeature({
       name: '神祕選物店',

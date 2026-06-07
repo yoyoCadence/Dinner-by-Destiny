@@ -20,6 +20,7 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## Done
 
+- [x] Fix Google Maps review import details and review-screen excluded-place correction
 - [x] Fix real-device import and layout issues: support multi-file Google Maps imports and remove the desktop phone frame from mobile viewports
 - [x] Fix project review findings for imported restaurant persistence, local date handling, import id collisions, PWA cache versioning, Pages workflow coverage, and regression tests
 - [x] Configure GitHub Pages deployment for the static PWA

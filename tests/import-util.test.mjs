@@ -52,6 +52,9 @@ assert.equal(noodle.city, '台北');
 assert.equal(noodle.eatCount, 3);
 assert.equal(noodle.lastEaten, '2026-06-05');
 assert.equal(noodle.blurb, '吃三次，湯很暖。');
+assert.equal(noodle.reviewText, '吃三次，湯很暖。\n第二行完整評論也要保留，不能只剩摘要。');
+assert.equal(noodle.mapUrl, 'https://maps.google.com/?cid=noodle');
+assert.equal(noodle.importReason, '有平均消費問卷');
 
 const maybe = parsed.find((r) => r.name === '神祕選物店');
 assert.ok(maybe);
@@ -65,6 +68,7 @@ const withSkipped = gm.parseGeoJSON({
 }, { includeNonFood: true });
 assert.equal(withSkipped.length, 1);
 assert.equal(withSkipped[0].confidence, 'skip');
+assert.equal(withSkipped[0].importReason, '命中停車、醫院、門市等硬排除字');
 
 const sameNameBranches = gm.parseGeoJSON({
   type: 'FeatureCollection',
@@ -78,13 +82,15 @@ assert.notEqual(sameNameBranches[0].id, sameNameBranches[1].id);
 
 const mergedLists = gm.mergeRestaurantLists([
   [{ id: 'same-place', name: '同一家', cuisine: 'unknown', confidence: 'maybe', price: 1, rating: 0, eatCount: 0, lastEaten: '', tags: ['saved'], blurb: '' }],
-  [{ id: 'same-place', name: '同一家', cuisine: 'noodle', confidence: 'food', price: 2, rating: 5, eatCount: 3, lastEaten: '2026-06-01', tags: ['review'], blurb: '有評論摘要' }],
+  [{ id: 'same-place', name: '同一家', cuisine: 'noodle', confidence: 'food', price: 2, rating: 5, eatCount: 3, lastEaten: '2026-06-01', tags: ['review'], blurb: '有評論摘要', reviewText: '完整評論文字', mapUrl: 'https://maps.google.com/?cid=same' }],
 ]);
 assert.equal(mergedLists.length, 1, 'multi-file import should merge duplicate places');
 assert.equal(mergedLists[0].confidence, 'food');
 assert.equal(mergedLists[0].cuisine, 'noodle');
 assert.equal(mergedLists[0].rating, 5);
 assert.equal(mergedLists[0].eatCount, 3);
+assert.equal(mergedLists[0].reviewText, '完整評論文字');
+assert.equal(mergedLists[0].mapUrl, 'https://maps.google.com/?cid=same');
 assert.equal(JSON.stringify(mergedLists[0].tags.sort()), JSON.stringify(['review', 'saved']));
 
 assert.equal(gm.parseGeoJSON(null).length, 0);

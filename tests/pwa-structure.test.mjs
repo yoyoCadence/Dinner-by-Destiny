@@ -44,6 +44,8 @@ assert.ok(html.includes('@media (min-width: 640px)'), 'desktop phone frame shoul
 assert.ok(app.includes("width: '100%'"));
 assert.ok(app.includes("className: 'app-preview-chrome status'"));
 assert.ok(importSheet.includes('multiple: true'), 'Google Maps import input should allow selecting saved places and reviews together');
+assert.ok(importSheet.includes('includeNonFood: true'), 'Import review should include excluded places so users can correct classifier mistakes');
+assert.ok(importSheet.includes('showSkipped'), 'Import review should let users expand the excluded-place list');
 assert.ok(!html.includes('晚餐選擇</title>'));
 
 const cacheMatch = sw.match(/const CACHE = '([^']+)'/);

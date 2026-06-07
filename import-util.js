@@ -53,6 +53,15 @@
     return 'maybe';                                            // 模稜兩可
   }
 
+  function classifyReason(name, p) {
+    var n = name || '';
+    if (HARD_NON_FOOD.test(n)) return '命中停車、醫院、門市等硬排除字';
+    if (hasSpendQuestion(p)) return '有平均消費問卷';
+    if (guessCuisine(n) !== 'unknown') return '店名有料理關鍵字';
+    if (SOFT_NON_FOOD.test(n)) return '像景點或設施，且沒有餐飲訊號';
+    return '沒有足夠餐飲訊號';
+  }
+
   // 清理店名：去掉「|說明」與結尾括號附註
   function cleanName(n) {
     n = (n || '').split(/[|｜]/)[0];
@@ -114,6 +123,7 @@
       if (coords[0] === 0 && coords[1] === 0) continue;
       var conf = classifyPlace(name, p);
       if (conf === 'skip' && !opts.includeNonFood) continue;
+      var reason = classifyReason(name, p);
       var disp = cleanName(name);
       var identity = disp + '|' + (loc.address || coords.join(','));
       if (seenIdentity[identity]) continue;
@@ -132,7 +142,10 @@
         eatCount: eatCountFromText(review),
         lastEaten: (p.date || '').slice(0, 10),
         dineIn: true, tags: [],
+        mapUrl: p.google_maps_url || '',
+        reviewText: review,
         blurb: review.split('\n')[0].slice(0, 40),
+        importReason: reason,
       });
     }
     return out;
@@ -157,6 +170,9 @@
           lastEaten: [old.lastEaten, r.lastEaten].filter(Boolean).sort().pop() || '',
           tags: Array.from(new Set([].concat(old.tags || [], r.tags || []))),
           blurb: (old.blurb || '').length >= (r.blurb || '').length ? old.blurb : r.blurb,
+          reviewText: (old.reviewText || '').length >= (r.reviewText || '').length ? old.reviewText : r.reviewText,
+          mapUrl: old.mapUrl || r.mapUrl || '',
+          importReason: old.importReason || r.importReason || '',
           excludedUntil: old.excludedUntil || r.excludedUntil || null,
         });
       });
@@ -167,7 +183,8 @@
   window.GMImport = {
     guessCuisine: guessCuisine, isFood: isFood, cleanName: cleanName, cityFromAddr: cityFromAddr,
     idFromName: idFromName, priceFromQuestions: priceFromQuestions, hasSpendQuestion: hasSpendQuestion,
-    classifyPlace: classifyPlace, eatCountFromText: eatCountFromText, parseGeoJSON: parseGeoJSON,
+    classifyPlace: classifyPlace, classifyReason: classifyReason,
+    eatCountFromText: eatCountFromText, parseGeoJSON: parseGeoJSON,
     mergeRestaurantLists: mergeRestaurantLists,
   };
 })();

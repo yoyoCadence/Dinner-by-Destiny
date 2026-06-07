@@ -89,6 +89,8 @@ function renderFreshStore(options) {
       dineIn: true,
       tags: ['test'],
       blurb: '測試匯入',
+      reviewText: '完整匯入評論',
+      mapUrl: 'https://maps.google.com/?cid=import-demo',
     },
     {
       id: store.state.restaurants[1].id,
@@ -100,6 +102,8 @@ function renderFreshStore(options) {
   assert.equal(next.some((r) => r.id === removeId), false);
   assert.equal(next.filter((r) => r.id === addList[0].id).length, 1);
   assert.equal(next.find((r) => r.id === addList[0].id).excludedUntil, null);
+  assert.equal(next.find((r) => r.id === addList[0].id).reviewText, '完整匯入評論');
+  assert.equal(next.find((r) => r.id === addList[0].id).mapUrl, 'https://maps.google.com/?cid=import-demo');
   assert.equal(next.filter((r) => r.id === store.state.restaurants[1].id).length, 1);
 }
 
@@ -131,6 +135,8 @@ function renderFreshStore(options) {
         addr: '新北市測試路 1 號',
         eatCount: 2,
         lastEaten: '2026-03-04',
+        reviewText: '舊匯入評論',
+        mapUrl: 'https://maps.google.com/?cid=stored-import',
         excludedUntil: null,
       },
       {
@@ -156,6 +162,8 @@ function renderFreshStore(options) {
   assert.ok(imported, 'migrate should preserve complete imported restaurants');
   assert.equal(imported.name, '匯入餐廳應保留');
   assert.equal(imported.eatCount, 2);
+  assert.equal(imported.reviewText, '舊匯入評論');
+  assert.equal(imported.mapUrl, 'https://maps.google.com/?cid=stored-import');
   assert.equal(store.state.restaurants.some((r) => r.id === 'stale-restaurant'), false);
   assert.equal(store.state.diary[0].name, '保留日記');
   assert.equal(store.state.settings.theme, 'dark');

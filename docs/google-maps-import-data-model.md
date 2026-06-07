@@ -33,6 +33,9 @@ The current PWA stores one JSON object in `localStorage['dinner_by_destiny_v1']`
   dineIn: true,
   tags: ['demo'],
   blurb: '短摘要',
+  reviewText: '完整 Google Maps 評論文字',
+  mapUrl: 'https://maps.google.com/...',
+  importReason: '店名有料理關鍵字',
   excludedUntil: null
 }
 ```
@@ -48,6 +51,10 @@ Field notes:
 - `lat` / `lng`: Coordinates used for radius filtering and Maps links.
 - `city` / `addr`: Display and city filtering.
 - `eatCount` / `lastEaten`: Derived from import text or updated by meal logs.
+- `blurb`: Short first-line review summary used in compact UI.
+- `reviewText`: Full Google Maps review text imported from `review_text_published`.
+- `mapUrl`: Original Google Maps URL imported from `google_maps_url`.
+- `importReason`: Non-sensitive classifier reason shown during import review.
 - `excludedUntil`: Snooze marker for "recently tired of this place".
 
 ## MealLog
@@ -94,9 +101,9 @@ Pipeline:
    - read `geometry.coordinates` as `[lng, lat]`
    - skip missing names and zero coordinates
    - classify place as `food`, `maybe`, or `skip`
-   - derive cuisine, city, price, rating, eat count, date, and short blurb
+   - derive cuisine, city, price, rating, eat count, date, short blurb, full review text, Maps URL, and classifier reason
 4. Diff imported records against current restaurants.
-5. Let user confirm additions and removals.
+5. Let user confirm additions, classifier exclusions, and removals.
 6. Apply confirmed changes through `store.applyImport(addList, removeIds)`.
 
 ## Future Supabase Tables
@@ -142,6 +149,9 @@ places (
   last_eaten date,
   dine_in boolean,
   blurb text,
+  review_text text,
+  map_url text,
+  import_reason text,
   excluded_until date,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -182,7 +192,7 @@ import_batches (
 ## Risks
 
 - Import ids are derived from cleaned names for compatibility, with address-derived fallback ids when same-name places have different addresses. Same-name places with missing/identical addresses can still collide.
-- Raw review text can reveal habits and should not be synced by default.
+- Raw review text can reveal habits; if backend sync is added later, it should stay user-owned and should not be shared by default.
 - Coordinates and timestamps are sensitive even without review text.
 - Removing a place during re-import may delete user edits if the diff model is too aggressive.
 
