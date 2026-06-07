@@ -89,9 +89,8 @@ function MagCard({ r, dist, onOpen, big }) {
 
 function Explore({ store, onOpen }) {
   const { state } = store;
-  const { radius, layout, city, noRadius } = state.settings;
+  const { radius, layout, city, noRadius, cuisine } = state.settings;
   const [q, setQ] = useState('');
-  const [cuisine, setCuisine] = useState('all');
   const [sort, setSort] = useState('dist');
 
   const withDist = useMemo(() => state.restaurants.map((r) => ({ r, dist: window.distM(window.HOME_LOC, r) })), [state.restaurants]);
@@ -175,8 +174,8 @@ function Explore({ store, onOpen }) {
       )
     ),
     React.createElement(window.HScroll, { style: { padding: '4px 18px 12px', flexShrink: 0 } },
-      React.createElement(Chip, { active: cuisine === 'all', onClick: () => setCuisine('all') }, '全部'),
-      cuisinesPresent.map((c) => React.createElement(Chip, { key: c.key, emoji: c.emoji, active: cuisine === c.key, onClick: () => setCuisine(c.key) }, c.label))
+      React.createElement(Chip, { active: cuisine === 'all', onClick: () => store.setSetting('cuisine', 'all') }, '全部'),
+      cuisinesPresent.map((c) => React.createElement(Chip, { key: c.key, emoji: c.emoji, active: cuisine === c.key, onClick: () => store.setSetting('cuisine', c.key) }, c.label))
     ),
     React.createElement('div', { style: { flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: layout === 'compact' ? '0' : '0 18px 24px' } }, listRender)
   );

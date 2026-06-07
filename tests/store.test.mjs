@@ -12,8 +12,10 @@ function renderFreshStore(options) {
   assert.equal(store.state.diary.length, 0);
   assert.equal(store.state.settings.theme, 'warm');
   assert.equal(store.state.settings.noRadius, true);
+  assert.equal(store.state.settings.cuisine, 'all');
   assert.equal(store.state.onboarded, false);
   assert.equal(store.state.onboardingVersionSeen, 0);
+  assert.deepEqual(Array.from(store.state.removedRestaurantIds), []);
   assert.ok(store.state.restaurants.every((r) => r.excludedUntil === null));
 
   store.setSetting('theme', 'dark');
@@ -104,13 +106,15 @@ function renderFreshStore(options) {
     },
   ];
   store.applyImport(addList, [removeId]);
-  const next = env.renderStore().state.restaurants;
+  const nextState = env.renderStore().state;
+  const next = nextState.restaurants;
   assert.equal(next.some((r) => r.id === removeId), false);
   assert.equal(next.filter((r) => r.id === addList[0].id).length, 1);
   assert.equal(next.find((r) => r.id === addList[0].id).excludedUntil, null);
   assert.equal(next.find((r) => r.id === addList[0].id).reviewText, '完整匯入評論');
   assert.equal(next.find((r) => r.id === addList[0].id).mapUrl, 'https://maps.google.com/?cid=import-demo');
   assert.equal(next.filter((r) => r.id === store.state.restaurants[1].id).length, 1);
+  assert.deepEqual(Array.from(nextState.removedRestaurantIds), [removeId], 'removed seed restaurants should stay removed after reload');
 }
 
 {
@@ -175,7 +179,26 @@ function renderFreshStore(options) {
   assert.equal(store.state.settings.theme, 'dark');
   assert.equal(store.state.settings.radius, 1200);
   assert.equal(store.state.settings.diceStyle, 'dice');
+  assert.equal(store.state.settings.cuisine, 'all');
+  assert.deepEqual(Array.from(store.state.removedRestaurantIds), []);
   assert.equal(store.state.onboardingVersionSeen, 0);
+}
+
+// migrate：使用者匯入時刪掉的內建示範餐廳，重開後不應復活
+{
+  const seed = createStoreHarness().window.SEED_RESTAURANTS[0];
+  const storedState = {
+    restaurants: [],
+    removedRestaurantIds: [seed.id],
+    diary: [],
+    settings: { theme: 'warm' },
+    friends: [],
+    onboarded: true,
+  };
+  const { env, store } = renderFreshStore({ storedState });
+  assert.equal(store.state.restaurants.some((r) => r.id === seed.id), false);
+  assert.equal(store.state.restaurants.length, env.window.SEED_RESTAURANTS.length - 1);
+  assert.deepEqual(Array.from(store.state.removedRestaurantIds), [seed.id]);
 }
 
 // deleteDiary：eatCount 已是 0 時不應跌破 0
