@@ -9,7 +9,7 @@ function OnboardingSheet({ onImport, onClose }) {
   const steps = [
     { n: '1', title: '先到「探索」選範圍', text: '第一個分頁可以用城市、距離、料理分類和搜尋縮小候選餐廳。還沒匯入前會先用示範資料。' },
     { n: '2', title: '再到中間分頁互動決定', text: '中間按鈕會依設定變成骰子、拉霸或抽卡。它會從目前候選清單裡挑出今晚可以吃的店。' },
-    { n: '3', title: '用 Google Maps 資料變成你的清單', text: '到「設定」→「匯入 Google Maps 餐廳」，同時選「評論.json」和「已儲存的地點.json」，確認後就會留下你的餐廳候選。' },
+    { n: '3', title: '用 Google Maps 資料變成你的清單', text: '到「設定」→「匯入 Google Maps 餐廳」，可直接匯入 Takeout .zip，或解壓縮後多選「評論.json」和「已儲存的地點.json」。確認後就會留下你的餐廳候選。' },
   ];
   return React.createElement('div', { style: { padding: '4px 18px 22px', display: 'flex', flexDirection: 'column', gap: 14 } },
     React.createElement('div', { style: { padding: '18px 16px', borderRadius: 18, background: 'var(--accent-soft)', border: '1.5px solid var(--accent)' } },
@@ -30,7 +30,7 @@ function OnboardingSheet({ onImport, onClose }) {
     ),
     React.createElement('div', { style: { padding: '13px 14px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--line)' } },
       React.createElement('p', { style: titleStyle }, 'Google Maps 匯出在哪裡？'),
-      React.createElement('p', { style: textStyle }, '打開 takeout.google.com → 建立新匯出 → 取消全選 → 勾選「Maps (your places) / 地圖（你的地點）」；如果介面另有「Saved」也一起勾選 → 下一步 → 建立匯出。下載 zip 後解壓縮，匯入裡面的「評論.json」和「已儲存的地點.json」。')
+      React.createElement('p', { style: textStyle }, '打開 takeout.google.com → 建立新匯出 → 取消全選 → 只勾「地圖（你的地點）」，不要勾上方的「地圖」→ 下一步 → 建立匯出。下載後可直接匯入 .zip，也可以解壓縮後匯入「評論.json」和「已儲存的地點.json」。')
     ),
     React.createElement('div', { style: { display: 'flex', gap: 10, paddingTop: 2 } },
       React.createElement('button', { onClick: onClose, style: { flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 800, cursor: 'pointer' } }, '先逛逛'),

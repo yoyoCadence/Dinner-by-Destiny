@@ -290,28 +290,31 @@ function CardMode({ deal, onResult }) {
 // 主 Dice 頁面
 function Dice({ store, onPick, onGroup }) {
   const [stage, setStage] = useState('menu');
-  const { diceStyle, city, noRadius, radius } = store.state.settings;
+  const [showScopeHelp, setShowScopeHelp] = useState(false);
+  const { diceStyle, city, cuisine, noRadius, radius } = store.state.settings;
 
   const pool = useMemo(function () {
     return store.state.restaurants
       .map(function (r) { return { r: r, dist: window.distM(window.HOME_LOC, r) }; })
-      .filter(function (x) { return (noRadius || x.dist <= radius) && (city === 'all' || x.r.city === city) && !window.isSnoozed(x.r); });
-  }, [store.state.restaurants, city, noRadius, radius]);
+      .filter(function (x) {
+        return (noRadius || x.dist <= radius)
+          && (city === 'all' || x.r.city === city)
+          && (cuisine === 'all' || x.r.cuisine === cuisine)
+          && !window.isSnoozed(x.r);
+      });
+  }, [store.state.restaurants, city, cuisine, noRadius, radius]);
 
   const shuffle = function (arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const deal = function (n) { return shuffle(pool).slice(0, n); };
 
   const handleResult = function (item) { onPick(item); setStage('menu'); };
   const cityLabel = city === 'all' ? '全部城市' : city;
+  const cuisineLabel = cuisine === 'all' ? '全部料理' : window.cuisineOf(cuisine).label;
+  const scopeLabel = cityLabel + ' · ' + cuisineLabel + (noRadius ? ' · 不限距離' : ' · ' + (radius / 1000).toFixed(1) + ' km 內');
 
   const header = React.createElement('div', { style: { padding: '12px 18px', flexShrink: 0, borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 } },
     React.createElement('h1', { style: { margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--ink)', whiteSpace: 'nowrap' } }, diceStyle === 'dice' ? '🎲 骰子' : diceStyle === 'slot' ? '🎰 拉霸' : '🎴 抽卡'),
-    React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-      React.createElement('select', { value: city, onChange: function (e) { store.setSetting('city', e.target.value); setStage('menu'); }, style: { fontSize: 13, fontWeight: 700, color: 'var(--ink)', background: 'var(--surface)', border: '1.5px solid var(--line)', borderRadius: 999, padding: '6px 10px', fontFamily: 'var(--font)', cursor: 'pointer' } },
-        [React.createElement('option', { key: 'all', value: 'all' }, '全部城市')].concat(window.CITIES.map(function (c) { return React.createElement('option', { key: c, value: c }, c); }))
-      ),
-      React.createElement('button', { onClick: function () { onGroup(); }, style: { background: 'none', border: 'none', color: 'var(--accent)', fontSize: 18, fontWeight: 700, cursor: 'pointer', padding: '4px' } }, '👥')
-    )
+    React.createElement('button', { onClick: function () { onGroup(); }, style: { background: 'none', border: 'none', color: 'var(--accent)', fontSize: 18, fontWeight: 700, cursor: 'pointer', padding: '4px' } }, '👥')
   );
 
   if (pool.length === 0) {
@@ -319,7 +322,7 @@ function Dice({ store, onPick, onGroup }) {
       React.createElement('div', { style: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center', gap: 12 } },
         React.createElement('span', { style: { fontSize: 72 } }, '😵'),
         React.createElement('h2', { style: { margin: 0, fontSize: 19, fontWeight: 800, color: 'var(--ink)' } }, cityLabel + ' 沒有餐廳'),
-        React.createElement('p', { style: { color: 'var(--ink-soft)', margin: 0, fontSize: 14, lineHeight: 1.6 } }, '換個城市，或到探索頁打開「不限距離」')
+        React.createElement('p', { style: { color: 'var(--ink-soft)', margin: 0, fontSize: 14, lineHeight: 1.6 } }, '請到探索分頁調整城市、距離或料理範圍')
       )
     );
   }
@@ -334,7 +337,13 @@ function Dice({ store, onPick, onGroup }) {
       stage === 'menu'
         ? React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 18, padding: 20 } },
             React.createElement('div', { style: { fontSize: 84 } }, diceStyle === 'dice' ? '🎲' : diceStyle === 'slot' ? '🎰' : '🎴'),
-            React.createElement('p', { style: { margin: 0, color: 'var(--ink-soft)', fontSize: 14, fontWeight: 600, textAlign: 'center' } }, '從 ' + cityLabel + ' 的 ' + pool.length + ' 家中，選出三家讓你挑'),
+            React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, flexWrap: 'wrap' } },
+              React.createElement('p', { style: { margin: 0, color: 'var(--ink-soft)', fontSize: 14, fontWeight: 600, textAlign: 'center' } }, '從探索範圍的 ' + pool.length + ' 家中，選出三家讓你挑'),
+              React.createElement('button', { onClick: function () { setShowScopeHelp(function (v) { return !v; }); }, 'aria-label': showScopeHelp ? '隱藏範圍說明' : '顯示範圍說明', style: { width: 24, height: 24, borderRadius: 999, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 14, fontWeight: 900, cursor: 'pointer', lineHeight: 1 } }, '!')
+            ),
+            showScopeHelp && React.createElement('div', { style: { maxWidth: 300, padding: '11px 13px', borderRadius: 13, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--ink-soft)', fontSize: 12.5, lineHeight: 1.6, textAlign: 'left' } },
+              React.createElement('b', { style: { color: 'var(--ink)' } }, '目前範圍：'), ' ', scopeLabel, '。請先到「探索」分頁選城市、距離或料理分類；骰子、拉霸和抽卡會直接從這個範圍內隨機挑餐廳。'
+            ),
             React.createElement('button', { onClick: function () { setStage('play'); }, style: { padding: '18px 40px', borderRadius: 20, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 20, fontWeight: 800, cursor: 'pointer', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' } }, diceStyle === 'dice' ? '🎲 開始骰' : diceStyle === 'slot' ? '🎰 進入拉霸' : '🎴 開始抽卡')
           )
         : playView

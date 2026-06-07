@@ -15,6 +15,9 @@ const { window } = loadBrowserFiles(
   { React, window: { Icons: {} } },
 );
 
+assert.ok(window.Group.toString().includes('同一支手機上的派對投票'), 'Group UI should clarify that no-backend voting is local/pass-and-play only');
+assert.ok(window.Group.toString().includes('需要之後加同步房間'), 'Group UI should not imply remote friend voting works before backend rooms exist');
+
 // 載入 store.jsx 後 isSnoozed 才會掛到 window；這裡直接補上，避免額外引入 store 依賴
 window.isSnoozed = (r) => r.excludedUntil && window.daysAgo(r.excludedUntil) < 0;
 
