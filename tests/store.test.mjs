@@ -12,10 +12,16 @@ function renderFreshStore(options) {
   assert.equal(store.state.diary.length, 0);
   assert.equal(store.state.settings.theme, 'warm');
   assert.equal(store.state.settings.noRadius, true);
+  assert.equal(store.state.onboarded, false);
+  assert.equal(store.state.onboardingVersionSeen, 0);
   assert.ok(store.state.restaurants.every((r) => r.excludedUntil === null));
 
   store.setSetting('theme', 'dark');
   assert.equal(env.renderStore().state.settings.theme, 'dark');
+
+  env.renderStore().completeOnboarding();
+  assert.equal(env.renderStore().state.onboarded, true);
+  assert.equal(env.renderStore().state.onboardingVersionSeen, env.window.ONBOARDING_VERSION);
 }
 
 {
@@ -169,6 +175,7 @@ function renderFreshStore(options) {
   assert.equal(store.state.settings.theme, 'dark');
   assert.equal(store.state.settings.radius, 1200);
   assert.equal(store.state.settings.diceStyle, 'dice');
+  assert.equal(store.state.onboardingVersionSeen, 0);
 }
 
 // deleteDiary：eatCount 已是 0 時不應跌破 0

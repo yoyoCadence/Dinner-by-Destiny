@@ -6,7 +6,6 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## Next
 
-- [ ] Add first-run onboarding tutorial explaining what the app does, why users should import Google Maps restaurant data, where to export that data from Google Maps, how to import it into this app, and add a Settings action to reopen the tutorial later
 - [ ] Verify the PWA manually in a browser after starting the local server with `npm.cmd run start`
 - [ ] Add app-state export/import backup before backend sync
 - [ ] Add custom dinner lists so users can create a named list, choose imported restaurants into it, and run the existing dice/slot/card tools against that list
@@ -29,6 +28,7 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## Done
 
+- [x] Add first-run onboarding tutorial explaining what the app does, why users should import Google Maps restaurant data, where to export that data from Google Maps, how to import it into this app, and add a Settings action to reopen the tutorial later
 - [x] Fix Google Maps review import details and review-screen excluded-place correction
 - [x] Fix real-device import and layout issues: support multi-file Google Maps imports and remove the desktop phone frame from mobile viewports
 - [x] Fix project review findings for imported restaurant persistence, local date handling, import id collisions, PWA cache versioning, Pages workflow coverage, and regression tests
