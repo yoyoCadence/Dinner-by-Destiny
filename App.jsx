@@ -1,21 +1,25 @@
 const { Sheet } = window;
 const { useState, useEffect, useRef } = React;
 
-function OnboardingSheet({ onImport, onClose }) {
+function TakeoutLink() {
+  return React.createElement('a', { href: 'https://takeout.google.com', target: '_blank', rel: 'noopener noreferrer', style: { color: 'var(--accent)', fontWeight: 900, textDecoration: 'underline' } }, 'takeout.google.com');
+}
+
+function OnboardingSheet({ onStart, onImport, onClose }) {
   const stepStyle = { display: 'flex', gap: 12, padding: '13px 14px', borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--line)' };
   const badgeStyle = { width: 28, height: 28, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0, background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 13, fontWeight: 900 };
   const titleStyle = { margin: '0 0 4px', fontSize: 14.5, fontWeight: 850, color: 'var(--ink)' };
   const textStyle = { margin: 0, fontSize: 12.8, color: 'var(--ink-soft)', lineHeight: 1.6 };
   const steps = [
-    { n: '1', title: '先到「探索」選範圍', text: '第一個分頁可以用城市、距離、料理分類和搜尋縮小候選餐廳。還沒匯入前會先用示範資料。' },
-    { n: '2', title: '再到中間分頁互動決定', text: '中間按鈕會依設定變成骰子、拉霸或抽卡。它會從目前候選清單裡挑出今晚可以吃的店。' },
-    { n: '3', title: '用 Google Maps 資料變成你的清單', text: '到「設定」→「匯入 Google Maps 餐廳」，可直接匯入 Takeout .zip，或解壓縮後多選「評論.json」和「已儲存的地點.json」。確認後就會留下你的餐廳候選。' },
+    { n: '1', title: '先用示範餐廳選範圍', text: '不用先準備資料。到「探索」點城市、距離或料理，先感受候選清單怎麼縮小。' },
+    { n: '2', title: '立刻骰一次', text: '骰子會直接套用探索範圍，抽出三家讓你挑。先玩到一次結果，再決定要不要個人化。' },
+    { n: '3', title: '覺得有用，再匯入自己的 Google Maps', text: '匯入後示範餐廳會換成你儲存、評論過的餐廳；可直接用 Takeout .zip。' },
   ];
   return React.createElement('div', { style: { padding: '4px 18px 22px', display: 'flex', flexDirection: 'column', gap: 14 } },
     React.createElement('div', { style: { padding: '18px 16px', borderRadius: 18, background: 'var(--accent-soft)', border: '1.5px solid var(--accent)' } },
       React.createElement('div', { style: { fontSize: 30, marginBottom: 8 } }, '🍽️'),
-      React.createElement('h2', { style: { margin: '0 0 7px', fontSize: 21, fontWeight: 900, color: 'var(--ink)', fontFamily: 'var(--font-display)' } }, '把「今天吃什麼」交給命運一點點'),
-      React.createElement('p', { style: { margin: 0, fontSize: 13.2, lineHeight: 1.65, color: 'var(--ink)' } }, '今晚吃命會把你在 Google Maps 儲存、評論過的餐廳整理成候選清單，再用骰子、拉霸或抽卡幫你做晚餐選擇。')
+      React.createElement('h2', { style: { margin: '0 0 7px', fontSize: 21, fontWeight: 900, color: 'var(--ink)', fontFamily: 'var(--font-display)' } }, '先試玩 30 秒，再決定要不要匯入'),
+      React.createElement('p', { style: { margin: 0, fontSize: 13.2, lineHeight: 1.65, color: 'var(--ink)' } }, '今晚吃命會用餐廳清單幫你縮小選擇，再用骰子、拉霸或抽卡做晚餐決策。第一次先用內建資料走一遍就好。')
     ),
     React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 9 } },
       steps.map(function (s) {
@@ -30,11 +34,30 @@ function OnboardingSheet({ onImport, onClose }) {
     ),
     React.createElement('div', { style: { padding: '13px 14px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--line)' } },
       React.createElement('p', { style: titleStyle }, 'Google Maps 匯出在哪裡？'),
-      React.createElement('p', { style: textStyle }, '打開 takeout.google.com → 建立新匯出 → 取消全選 → 只勾「地圖（你的地點）」，不要勾上方的「地圖」→ 下一步 → 建立匯出。下載後可直接匯入 .zip，也可以解壓縮後匯入「評論.json」和「已儲存的地點.json」。')
+      React.createElement('p', { style: textStyle }, '等你試玩後想換成自己的清單，再打開 ', React.createElement(TakeoutLink), ' → 建立新匯出 → 取消全選 → 只勾「地圖（你的地點）」，不要勾上方的「地圖」。')
     ),
     React.createElement('div', { style: { display: 'flex', gap: 10, paddingTop: 2 } },
       React.createElement('button', { onClick: onClose, style: { flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 800, cursor: 'pointer' } }, '先逛逛'),
-      React.createElement('button', { onClick: onImport, style: { flex: 1.4, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '去匯入資料')
+      React.createElement('button', { onClick: onStart, style: { flex: 1.4, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '開始 30 秒試玩')
+    )
+  );
+}
+
+function ImportPromptSheet({ onImport, onClose }) {
+  const textStyle = { margin: 0, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.7 };
+  return React.createElement('div', { style: { padding: '4px 18px 22px', display: 'flex', flexDirection: 'column', gap: 14 } },
+    React.createElement('div', { style: { padding: '18px 16px', borderRadius: 18, background: 'var(--accent-soft)', border: '1.5px solid var(--accent)' } },
+      React.createElement('div', { style: { fontSize: 30, marginBottom: 8 } }, '🎉'),
+      React.createElement('h2', { style: { margin: '0 0 7px', fontSize: 21, fontWeight: 900, color: 'var(--ink)', fontFamily: 'var(--font-display)' } }, '玩法就是這樣'),
+      React.createElement('p', { style: { margin: 0, fontSize: 13.2, lineHeight: 1.65, color: 'var(--ink)' } }, '如果剛剛這個流程有幫你少想一點，下一步就把示範餐廳換成你自己的 Google Maps 清單。')
+    ),
+    React.createElement('div', { style: { padding: '13px 14px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--line)' } },
+      React.createElement('p', { style: { margin: '0 0 4px', fontSize: 14.5, fontWeight: 850, color: 'var(--ink)' } }, '匯出資料'),
+      React.createElement('p', { style: textStyle }, '打開 ', React.createElement(TakeoutLink), ' → 建立新匯出 → 取消全選 → 只勾「地圖（你的地點）」→ 下一步 → 建立匯出。下載後可直接匯入 .zip，也可以解壓縮後匯入「評論.json」和「已儲存的地點.json」。')
+    ),
+    React.createElement('div', { style: { display: 'flex', gap: 10, paddingTop: 2 } },
+      React.createElement('button', { onClick: onClose, style: { flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 800, cursor: 'pointer' } }, '先用示範資料'),
+      React.createElement('button', { onClick: onImport, style: { flex: 1.3, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '去匯入資料')
     )
   );
 }
@@ -49,6 +72,7 @@ window.DinnerApp = function App() {
   const [importOpen, setImportOpen] = useState(false);
   const [editEntry, setEditEntry] = useState(null);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [guideStep, setGuideStep] = useState(null); // explore | dice | import
   const [toast, setToast] = useState(null);
   const screenRef = useRef(null);
 
@@ -66,7 +90,9 @@ window.DinnerApp = function App() {
   const openLog = r => { setDetail(null); setLogPreset(r || null); setLogOpen(true); };
   const needsOnboarding = (store.state.onboardingVersionSeen || 0) < (window.ONBOARDING_VERSION || 1);
   const closeOnboarding = () => { setOnboardingOpen(false); store.completeOnboarding(); };
-  const importFromOnboarding = () => { closeOnboarding(); setTab('settings'); setImportOpen(true); };
+  const startGuidedTry = () => { setOnboardingOpen(false); store.completeOnboarding(); setGuideStep('explore'); setTab('explore'); };
+  const importFromOnboarding = () => { closeOnboarding(); setGuideStep(null); setTab('settings'); setImportOpen(true); };
+  const closeImportPrompt = () => { setGuideStep(null); };
 
   const getDiceIcon = () => {
     const style = store.state.settings.diceStyle;
@@ -84,8 +110,8 @@ window.DinnerApp = function App() {
   });
 
   let mainScreen = null;
-  if (tab === 'explore') mainScreen = React.createElement(window.Explore, { store, onOpen: openDetail });
-  else if (tab === 'dice') mainScreen = React.createElement(window.Dice, { store, onPick: pickToEat, onGroup: () => setGroupOpen(true) });
+  if (tab === 'explore') mainScreen = React.createElement(window.Explore, { store, onOpen: openDetail, guideActive: guideStep === 'explore', onGuideNext: () => { setGuideStep('dice'); setTab('dice'); }, onGuideSkip: () => setGuideStep(null) });
+  else if (tab === 'dice') mainScreen = React.createElement(window.Dice, { store, onPick: pickToEat, onGroup: () => setGroupOpen(true), guideActive: guideStep === 'dice', onGuideDone: () => setGuideStep('import'), onGuideSkip: () => setGuideStep(null) });
   else if (tab === 'diary') mainScreen = React.createElement(window.Diary, { store, onAdd: () => openLog(null), onEdit: (d) => setEditEntry(d) });
   else if (tab === 'stats') mainScreen = React.createElement(window.Stats, { store });
   else if (tab === 'settings') mainScreen = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' } },
@@ -120,7 +146,7 @@ window.DinnerApp = function App() {
           React.createElement('span', { style: { fontSize: 24 } }, '❔'),
           React.createElement('div', { style: { flex: 1 } },
             React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, '重看第一次使用說明'),
-            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, 'App 目的、分頁流程與 Google Maps 匯出步驟')
+            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '30 秒試玩、分頁流程與 Google Maps 匯出步驟')
           ),
           React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
         )
@@ -185,7 +211,8 @@ window.DinnerApp = function App() {
     React.createElement(Sheet, { open: logOpen, onClose: () => setLogOpen(false), title: '記錄這一餐', full: true }, React.createElement(window.LogSheet, { store, preset: logPreset, onClose: () => { setLogOpen(false); showToast('已記錄 ✅'); } })),
     React.createElement(Sheet, { open: groupOpen, onClose: () => setGroupOpen(false), title: '和朋友一起骰', full: true }, React.createElement(window.Group, { store, onClose: () => setGroupOpen(false), onPick: pickToEat })),
     React.createElement(Sheet, { open: importOpen, onClose: () => setImportOpen(false), title: '匯入餐廳資料', full: true }, React.createElement(window.ImportSheet, { store, onClose: () => { setImportOpen(false); showToast('餐廳清單已更新 ✅'); } })),
-    React.createElement(Sheet, { open: needsOnboarding || onboardingOpen, onClose: closeOnboarding, title: '第一次使用說明', full: true }, React.createElement(OnboardingSheet, { onImport: importFromOnboarding, onClose: closeOnboarding })),
+    React.createElement(Sheet, { open: guideStep === 'import', onClose: closeImportPrompt, title: '換成你的餐廳', full: true }, React.createElement(ImportPromptSheet, { onImport: importFromOnboarding, onClose: closeImportPrompt })),
+    React.createElement(Sheet, { open: needsOnboarding || onboardingOpen, onClose: closeOnboarding, title: '第一次使用說明', full: true }, React.createElement(OnboardingSheet, { onStart: startGuidedTry, onImport: importFromOnboarding, onClose: closeOnboarding })),
     React.createElement(Sheet, { open: !!editEntry, onClose: () => setEditEntry(null), title: '編輯這一餐', full: true }, editEntry && React.createElement(window.DiaryEditSheet, { store, entry: editEntry, onClose: () => setEditEntry(null) })),
     toast && React.createElement('div', { style: { position: 'absolute', bottom: 96, left: '50%', transform: 'translateX(-50%)', background: 'var(--chrome)', color: 'var(--bg)', padding: '11px 18px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, whiteSpace: 'nowrap', zIndex: 80, boxShadow: '0 8px 24px rgba(0,0,0,.3)' } }, toast)
   );
