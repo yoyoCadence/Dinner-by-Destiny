@@ -26,7 +26,7 @@ This file is the shared collaboration contract for Codex, Claude Code, and human
 - **Main entry points:** `index.html` is the browser entry point; `App.jsx` mounts `window.DinnerApp`; screen modules live in `screens/`; `scripts/serve-static.mjs` serves the PWA locally.
 - **Storage / data model:** `store.jsx` persists app state in `localStorage['dinner_by_destiny_v1']`; `data.js` provides sanitized demo restaurants and cuisine metadata; `import-util.js` parses Google Maps GeoJSON-style exports into restaurant records.
 - **Test coverage:** `npm.cmd run test` runs the Node test suite. Coverage includes app-shell smoke checks, sanitized demo data integrity, documentation guardrails, Google Maps import parsing/classification, privacy/ignored-file boundaries, PWA structure and Service Worker cache targets, static server behavior, store state operations, and theme/helper utilities.
-- **Deployment / cache notes:** `sw.js` caches the PWA shell under `dinner-by-destiny-v5`; increment that cache name whenever cached app-shell files change. `manifest.webmanifest` is configured for standalone mobile install.
+- **Deployment / cache notes:** `sw.js` caches the PWA shell under `dinner-by-destiny-v10`; increment that cache name whenever cached app-shell files change. `manifest.webmanifest` is configured for standalone mobile install.
 
 ---
 

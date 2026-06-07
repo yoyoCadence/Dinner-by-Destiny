@@ -2,7 +2,7 @@
 const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
 const STORE_KEY = 'dinner_by_destiny_v1';
-const ONBOARDING_VERSION = 1;
+const ONBOARDING_VERSION = 3;
 window.ONBOARDING_VERSION = ONBOARDING_VERSION;
 
 function normalizeUserRestaurant(r) {
@@ -47,22 +47,26 @@ function loadStore() {
 function migrate(s) {
   if (!s || !s.restaurants) return s;
   // 補上後來新增的設定欄位
-  s.settings = Object.assign({ theme: 'warm', radius: 1200, noRadius: true, city: 'all', layout: 'card', diceStyle: 'dice' }, s.settings || {});
+  s.settings = Object.assign({ theme: 'warm', radius: 1200, noRadius: true, city: 'all', cuisine: 'all', layout: 'card', diceStyle: 'dice' }, s.settings || {});
+  s.removedRestaurantIds = Array.isArray(s.removedRestaurantIds) ? s.removedRestaurantIds.filter(Boolean) : [];
   if (typeof s.onboardingVersionSeen !== 'number') s.onboardingVersionSeen = 0;
   const seedById = {};
   window.SEED_RESTAURANTS.forEach((r) => { seedById[r.id] = r; });
+  const removedSeedIds = new Set(s.removedRestaurantIds);
   const savedById = {};
   s.restaurants.forEach((r) => { savedById[r.id] = r; });
-  const migratedSeeds = window.SEED_RESTAURANTS.map((seed) => {
-    const old = savedById[seed.id] || {};
-    return {
-      ...seed,
-      eatCount: old.eatCount != null ? old.eatCount : seed.eatCount,
-      lastEaten: old.lastEaten || seed.lastEaten,
-      rating: old.rating != null ? old.rating : seed.rating,
-      excludedUntil: old.excludedUntil || null,
-    };
-  });
+  const migratedSeeds = window.SEED_RESTAURANTS
+    .filter((seed) => !removedSeedIds.has(seed.id))
+    .map((seed) => {
+      const old = savedById[seed.id] || {};
+      return {
+        ...seed,
+        eatCount: old.eatCount != null ? old.eatCount : seed.eatCount,
+        lastEaten: old.lastEaten || seed.lastEaten,
+        rating: old.rating != null ? old.rating : seed.rating,
+        excludedUntil: old.excludedUntil || null,
+      };
+    });
   const imported = s.restaurants
     .filter((r) => !seedById[r.id])
     .map(normalizeUserRestaurant)
@@ -82,6 +86,7 @@ function defaultState() {
       radius: 1200, // 公尺
       noRadius: true, // 不限距離：true 時忽略半徑，顯示全部餐廳
       city: 'all', // all | 台北 | 新北 | ...
+      cuisine: 'all', // all | cuisine key
       layout: 'card', // card | compact | magazine
       diceStyle: 'dice', // dice | slot | card
     },
@@ -90,6 +95,7 @@ function defaultState() {
       { id: 'f2', name: '阿傑', emoji: '🐻' },
       { id: 'f3', name: '宥宥', emoji: '🐰' },
     ],
+    removedRestaurantIds: [],
     onboarded: false,
     onboardingVersionSeen: 0,
   };
@@ -205,10 +211,14 @@ function useStore() {
       const removeSet = new Set(removeIds || []);
       const restaurants = s.restaurants.filter((r) => !removeSet.has(r.id));
       const existing = new Set(restaurants.map((r) => r.id));
+      const seedIds = new Set(window.SEED_RESTAURANTS.map((r) => r.id));
+      const addIds = new Set((addList || []).map((r) => r && r.id).filter(Boolean));
+      const removedRestaurantIds = Array.from(new Set([...(s.removedRestaurantIds || []), ...(removeIds || []).filter((id) => seedIds.has(id))]))
+        .filter((id) => !addIds.has(id));
       (addList || []).forEach((r) => {
         if (!existing.has(r.id)) restaurants.push(Object.assign({ excludedUntil: null }, r));
       });
-      return { ...s, restaurants };
+      return { ...s, restaurants, removedRestaurantIds };
     });
   }, []);
 

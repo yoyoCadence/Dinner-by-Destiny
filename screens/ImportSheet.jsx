@@ -2,6 +2,9 @@
    分類／解析全部走 import-util.js 的 window.GMImport（純程式，無 AI），
    與產生種子資料 data.js 的是同一段程式。 */
 const { useState, useMemo } = React;
+const ZIP_LOCAL_FILE = 0x04034b50;
+const ZIP_CENTRAL_FILE = 0x02014b50;
+const ZIP_END = 0x06054b50;
 
 // 假測試資料：保留現有大部分，故意少掉最後 2 家（示範刪除），再加 A／B／C（C 示範待分類）
 function fakeImport(current) {
@@ -22,6 +25,76 @@ function diffImport(current, imported) {
   const add = imported.filter(function (r) { return !curById[r.id]; });
   const remove = current.filter(function (r) { return !impById[r.id]; });
   return { add: add, remove: remove };
+}
+
+function readArrayBufferFile(file) {
+  if (file.arrayBuffer) return file.arrayBuffer();
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function () { resolve(reader.result); };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function decodeZipName(bytes, flags) {
+  const encoding = (flags & 0x0800) ? 'utf-8' : 'utf-8';
+  return new TextDecoder(encoding).decode(bytes);
+}
+
+function findZipEnd(view) {
+  const min = Math.max(0, view.byteLength - 65557);
+  for (var i = view.byteLength - 22; i >= min; i--) {
+    if (view.getUint32(i, true) === ZIP_END) return i;
+  }
+  return -1;
+}
+
+function inflateRaw(bytes) {
+  if (typeof DecompressionStream === 'undefined') {
+    return Promise.reject(new Error('zip deflate is not supported'));
+  }
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Response(stream).arrayBuffer();
+}
+
+function readZipJsonFiles(file) {
+  return readArrayBufferFile(file).then(function (buffer) {
+    const view = new DataView(buffer);
+    const end = findZipEnd(view);
+    if (end < 0) throw new Error('zip end not found');
+    const total = view.getUint16(end + 10, true);
+    var ptr = view.getUint32(end + 16, true);
+    const reads = [];
+    for (var i = 0; i < total; i++) {
+      if (view.getUint32(ptr, true) !== ZIP_CENTRAL_FILE) throw new Error('zip central directory is invalid');
+      const flags = view.getUint16(ptr + 8, true);
+      const method = view.getUint16(ptr + 10, true);
+      const compressedSize = view.getUint32(ptr + 20, true);
+      const nameLen = view.getUint16(ptr + 28, true);
+      const extraLen = view.getUint16(ptr + 30, true);
+      const commentLen = view.getUint16(ptr + 32, true);
+      const localOffset = view.getUint32(ptr + 42, true);
+      const name = decodeZipName(new Uint8Array(buffer, ptr + 46, nameLen), flags);
+      ptr += 46 + nameLen + extraLen + commentLen;
+      if (!/\.json$/i.test(name)) continue;
+      if (view.getUint32(localOffset, true) !== ZIP_LOCAL_FILE) throw new Error('zip local file is invalid');
+      const localNameLen = view.getUint16(localOffset + 26, true);
+      const localExtraLen = view.getUint16(localOffset + 28, true);
+      const dataOffset = localOffset + 30 + localNameLen + localExtraLen;
+      const compressed = new Uint8Array(buffer, dataOffset, compressedSize);
+      const payload = method === 0
+        ? Promise.resolve(compressed.slice().buffer)
+        : method === 8
+          ? inflateRaw(compressed)
+          : Promise.reject(new Error('zip compression method is not supported'));
+      reads.push(payload.then(function (raw) {
+        return JSON.parse(new TextDecoder('utf-8').decode(raw));
+      }));
+    }
+    if (!reads.length) throw new Error('zip has no json');
+    return Promise.all(reads);
+  });
 }
 
 function Row({ r, checked, onToggle, danger, cuisine, onCuisine, muted }) {
@@ -53,6 +126,7 @@ function ImportSheet({ store, onClose }) {
   const [rmSel, setRmSel] = useState({});
   const [cuisineMap, setCuisineMap] = useState({}); // id → 使用者選的分類
   const [showSkipped, setShowSkipped] = useState(false);
+  const [showImportHelp, setShowImportHelp] = useState(false);
 
   const startReview = function (list) {
     const d = diffImport(current, list);
@@ -77,18 +151,24 @@ function ImportSheet({ store, onClose }) {
     });
   };
 
+  const readInputFile = function (file) {
+    if (/\.zip$/i.test(file.name || '') || /zip/i.test(file.type || '')) return readZipJsonFiles(file);
+    return readJsonFile(file).then(function (json) { return [json]; });
+  };
+
   const onFile = function (e) {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    Promise.all(files.map(readJsonFile)).then(function (jsonList) {
+    Promise.all(files.map(readInputFile)).then(function (nestedJsonList) {
       try {
+        const jsonList = [].concat.apply([], nestedJsonList);
         const parsedLists = jsonList.map(function (json) { return window.GMImport.parseGeoJSON(json, { includeNonFood: true }); });
         const list = window.GMImport.mergeRestaurantLists(parsedLists);
-        if (!list.length) { setErr('檔案裡找不到可匯入的地點（需 Google Maps 匯出的 GeoJSON）。'); return; }
+        if (!list.length) { setErr('檔案裡找不到可匯入的地點（需 Google Maps「地圖（你的地點）」匯出的 GeoJSON）。'); return; }
         startReview(list);
-      } catch (e2) { setErr('檔案解析失敗，請確認是 Google Maps 匯出的 .json。'); }
+      } catch (e2) { setErr('檔案解析失敗，請確認是 Google Maps「地圖（你的地點）」匯出的 .zip 或 .json。'); }
     }).catch(function () {
-      setErr('檔案解析失敗，請確認每個檔案都是 Google Maps 匯出的 .json。');
+      setErr('檔案解析失敗，請確認檔案是 Google Maps「地圖（你的地點）」匯出的 .zip，或解壓縮後的 .json。');
     });
   };
 
@@ -102,12 +182,32 @@ function ImportSheet({ store, onClose }) {
 
   if (stage === 'pick') {
     return React.createElement('div', { style: { padding: '4px 4px 20px', display: 'flex', flexDirection: 'column', gap: 14 } },
-      React.createElement('p', { style: { margin: 0, fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.6 } }, '從 Google Maps 匯出「已儲存的地點」和「評論」的 .json 檔來更新清單。可一次多選，系統會合併去重，再自動分流：是餐廳的收錄、明顯是景點/設施的排除、不確定的列出來讓你勾選。再次匯入會比對差異，由你確認新增或刪除。'),
+      React.createElement('div', { style: { display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--line)' } },
+        React.createElement('div', { style: { flex: 1, minWidth: 0 } },
+          React.createElement('div', { style: { fontSize: 13.5, fontWeight: 850, color: 'var(--ink)', marginBottom: 4 } }, '匯出方式'),
+          React.createElement('p', { style: { margin: 0, fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.6 } },
+            '到 ',
+            React.createElement('a', { href: 'https://takeout.google.com', target: '_blank', rel: 'noopener noreferrer', onClick: function (e) { e.stopPropagation(); }, style: { color: 'var(--accent)', fontWeight: 900, textDecoration: 'underline' } }, 'takeout.google.com'),
+            ' → 取消全選 → 只勾「地圖（你的地點）」這一項，不需要勾上方的「地圖」→ 下一步 → 建立匯出。下載後可直接選 .zip，也可以解壓縮後選「評論.json」與「已儲存的地點.json」。'
+          )
+        ),
+        React.createElement('button', { onClick: function () { setShowImportHelp(true); }, 'aria-label': '查看安全說明', style: { width: 32, height: 32, borderRadius: 999, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 18, fontWeight: 900, cursor: 'pointer', flexShrink: 0 } }, '!')
+      ),
+      showImportHelp && React.createElement(React.Fragment, null,
+        React.createElement('button', { onMouseDown: function () { setShowImportHelp(false); }, onClick: function () { setShowImportHelp(false); }, 'aria-label': '關閉安全說明背景', style: { position: 'fixed', inset: 0, zIndex: 80, border: 'none', background: 'rgba(24, 19, 15, 0.34)', padding: 0, cursor: 'default' } }),
+        React.createElement('div', { role: 'dialog', 'aria-modal': 'true', 'aria-label': '安全說明', onClick: function (event) { event.stopPropagation(); }, style: { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 81, width: 'min(360px, calc(100vw - 40px))', borderRadius: 18, background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: '0 18px 45px rgba(24, 19, 15, 0.24)', padding: '18px 18px 16px' } },
+          React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 } },
+            React.createElement('div', { style: { fontSize: 16, fontWeight: 900, color: 'var(--ink)' } }, '安全說明'),
+            React.createElement('button', { onClick: function () { setShowImportHelp(false); }, 'aria-label': '關閉安全說明', style: { width: 30, height: 30, borderRadius: 999, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--ink-soft)', fontSize: 18, fontWeight: 800, cursor: 'pointer' } }, '×')
+          ),
+          React.createElement('p', { style: { margin: 0, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.7 } }, 'Google 地圖資料匯出只會包含你記錄的店名、餐廳地址、座標、日期、評論文字與 Maps 連結；不需要匯入其他 Google 資料，也就能避免不必要的個人敏感資料疑慮。本 App 只在你的瀏覽器中解析這些欄位，用來整理餐廳候選。')
+        )
+      ),
       React.createElement('label', { style: { display: 'block', padding: '16px', borderRadius: 14, border: '2px dashed var(--line)', background: 'var(--surface)', textAlign: 'center', cursor: 'pointer' } },
         React.createElement('div', { style: { fontSize: 30, marginBottom: 6 } }, '📁'),
-        React.createElement('div', { style: { fontSize: 14, fontWeight: 700, color: 'var(--ink)' } }, '選擇 Google Maps .json 檔（可多選）'),
-        React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 4 } }, '建議同時選「評論.json」與「已儲存的地點.json」'),
-        React.createElement('input', { type: 'file', accept: '.json,application/json', multiple: true, onChange: onFile, style: { display: 'none' } })
+        React.createElement('div', { style: { fontSize: 14, fontWeight: 700, color: 'var(--ink)' } }, '選擇 Google Maps .zip 或 .json 檔'),
+        React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 4 } }, '可直接選 Takeout 壓縮檔，或解壓縮後多選「評論.json」與「已儲存的地點.json」'),
+        React.createElement('input', { type: 'file', accept: '.zip,application/zip,application/x-zip-compressed,.json,application/json', multiple: true, onChange: onFile, style: { display: 'none' } })
       ),
       React.createElement('button', { onClick: function () { startReview(fakeImport(current)); }, style: { padding: '13px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 700, cursor: 'pointer' } }, '🧪 用測試資料模擬匯入（A／B 餐廳）'),
       err && React.createElement('div', { style: { fontSize: 12.5, color: '#d9534f', fontWeight: 600 } }, err)

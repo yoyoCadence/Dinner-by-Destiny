@@ -87,11 +87,10 @@ function MagCard({ r, dist, onOpen, big }) {
   );
 }
 
-function Explore({ store, onOpen }) {
+function Explore({ store, onOpen, guideActive, onGuideNext, onGuideSkip }) {
   const { state } = store;
-  const { radius, layout, city, noRadius } = state.settings;
+  const { radius, layout, city, noRadius, cuisine } = state.settings;
   const [q, setQ] = useState('');
-  const [cuisine, setCuisine] = useState('all');
   const [sort, setSort] = useState('dist');
 
   const withDist = useMemo(() => state.restaurants.map((r) => ({ r, dist: window.distM(window.HOME_LOC, r) })), [state.restaurants]);
@@ -158,6 +157,19 @@ function Explore({ store, onOpen }) {
         q && React.createElement('button', { onClick: () => setQ(''), style: { background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-faint)' } }, React.createElement(Icons.close, { size: 16 }))
       )
     ),
+    guideActive && React.createElement('div', { style: { margin: '0 18px 10px', padding: '13px 14px', borderRadius: 14, background: 'var(--accent-soft)', border: '1.5px solid var(--accent)', flexShrink: 0 } },
+      React.createElement('div', { style: { display: 'flex', gap: 10, alignItems: 'flex-start' } },
+        React.createElement('span', { style: { fontSize: 22, flexShrink: 0 } }, '👆'),
+        React.createElement('div', { style: { flex: 1, minWidth: 0 } },
+          React.createElement('div', { style: { fontSize: 14, fontWeight: 900, color: 'var(--ink)', marginBottom: 4 } }, '先選一個範圍'),
+          React.createElement('p', { style: { margin: 0, fontSize: 12.6, color: 'var(--ink)', lineHeight: 1.55 } }, '點城市、料理或距離，下面候選清單會立刻改變。等一下骰子會直接用這個範圍。')
+        )
+      ),
+      React.createElement('div', { style: { display: 'flex', gap: 8, marginTop: 11 } },
+        React.createElement('button', { onClick: onGuideSkip, style: { flex: 1, padding: '10px 12px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 12.5, fontWeight: 800, cursor: 'pointer' } }, '我自己逛'),
+        React.createElement('button', { onClick: onGuideNext, style: { flex: 1.5, padding: '10px 12px', borderRadius: 12, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 12.5, fontWeight: 900, cursor: 'pointer' } }, '用目前範圍去骰一次')
+      )
+    ),
     React.createElement(window.HScroll, { style: { padding: '0 18px 10px', flexShrink: 0 } },
       React.createElement(Chip, { active: city === 'all', onClick: () => store.setSetting('city', 'all') }, '全部城市'),
       window.CITIES.map((c) => React.createElement(Chip, { key: c, active: city === c, onClick: () => store.setSetting('city', c) }, c))
@@ -175,8 +187,8 @@ function Explore({ store, onOpen }) {
       )
     ),
     React.createElement(window.HScroll, { style: { padding: '4px 18px 12px', flexShrink: 0 } },
-      React.createElement(Chip, { active: cuisine === 'all', onClick: () => setCuisine('all') }, '全部'),
-      cuisinesPresent.map((c) => React.createElement(Chip, { key: c.key, emoji: c.emoji, active: cuisine === c.key, onClick: () => setCuisine(c.key) }, c.label))
+      React.createElement(Chip, { active: cuisine === 'all', onClick: () => store.setSetting('cuisine', 'all') }, '全部'),
+      cuisinesPresent.map((c) => React.createElement(Chip, { key: c.key, emoji: c.emoji, active: cuisine === c.key, onClick: () => store.setSetting('cuisine', c.key) }, c.label))
     ),
     React.createElement('div', { style: { flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: layout === 'compact' ? '0' : '0 18px 24px' } }, listRender)
   );
