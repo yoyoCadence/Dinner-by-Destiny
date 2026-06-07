@@ -2,6 +2,8 @@
 const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
 const STORE_KEY = 'dinner_by_destiny_v1';
+const ONBOARDING_VERSION = 1;
+window.ONBOARDING_VERSION = ONBOARDING_VERSION;
 
 function normalizeUserRestaurant(r) {
   if (!r || !r.id || !r.name || typeof r.lat !== 'number' || typeof r.lng !== 'number') return null;
@@ -46,6 +48,7 @@ function migrate(s) {
   if (!s || !s.restaurants) return s;
   // 補上後來新增的設定欄位
   s.settings = Object.assign({ theme: 'warm', radius: 1200, noRadius: true, city: 'all', layout: 'card', diceStyle: 'dice' }, s.settings || {});
+  if (typeof s.onboardingVersionSeen !== 'number') s.onboardingVersionSeen = 0;
   const seedById = {};
   window.SEED_RESTAURANTS.forEach((r) => { seedById[r.id] = r; });
   const savedById = {};
@@ -87,7 +90,8 @@ function defaultState() {
       { id: 'f2', name: '阿傑', emoji: '🐻' },
       { id: 'f3', name: '宥宥', emoji: '🐰' },
     ],
-    onboarded: true,
+    onboarded: false,
+    onboardingVersionSeen: 0,
   };
 }
 
@@ -191,6 +195,10 @@ function useStore() {
 
   const resetAll = useCallback(() => setState(defaultState()), []);
 
+  const completeOnboarding = useCallback(() => {
+    setState((s) => ({ ...s, onboarded: true, onboardingVersionSeen: ONBOARDING_VERSION }));
+  }, []);
+
   // 套用 Google Maps 匯入差異：新增 addList、刪除 removeIds
   const applyImport = useCallback((addList, removeIds) => {
     setState((s) => {
@@ -206,7 +214,7 @@ function useStore() {
 
   return {
     state, setState,
-    setSetting, logMeal, deleteDiary, updateDiary, setCuisine, snooze, unsnooze, setRating, resetAll, applyImport,
+    setSetting, logMeal, deleteDiary, updateDiary, setCuisine, snooze, unsnooze, setRating, resetAll, applyImport, completeOnboarding,
   };
 }
 
