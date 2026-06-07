@@ -185,7 +185,11 @@ function ImportSheet({ store, onClose }) {
       React.createElement('div', { style: { display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--line)' } },
         React.createElement('div', { style: { flex: 1, minWidth: 0 } },
           React.createElement('div', { style: { fontSize: 13.5, fontWeight: 850, color: 'var(--ink)', marginBottom: 4 } }, '匯出方式'),
-          React.createElement('p', { style: { margin: 0, fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.6 } }, '到 takeout.google.com → 取消全選 → 只勾「地圖（你的地點）」這一項，不需要勾上方的「地圖」→ 下一步 → 建立匯出。下載後可直接選 .zip，也可以解壓縮後選「評論.json」與「已儲存的地點.json」。')
+          React.createElement('p', { style: { margin: 0, fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.6 } },
+            '到 ',
+            React.createElement('a', { href: 'https://takeout.google.com', target: '_blank', rel: 'noopener noreferrer', onClick: function (e) { e.stopPropagation(); }, style: { color: 'var(--accent)', fontWeight: 900, textDecoration: 'underline' } }, 'takeout.google.com'),
+            ' → 取消全選 → 只勾「地圖（你的地點）」這一項，不需要勾上方的「地圖」→ 下一步 → 建立匯出。下載後可直接選 .zip，也可以解壓縮後選「評論.json」與「已儲存的地點.json」。'
+          )
         ),
         React.createElement('button', { onClick: function () { setShowImportHelp(true); }, 'aria-label': '查看安全說明', style: { width: 32, height: 32, borderRadius: 999, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 18, fontWeight: 900, cursor: 'pointer', flexShrink: 0 } }, '!')
       ),

@@ -29,6 +29,7 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 ## Done
 
 - [x] Make randomizer pages use the Explore scope instead of owning a city filter, with a help toggle explaining where to adjust the range
+- [x] Redesign first-run guidance as a low-friction demo flow before asking users to import Google Maps data
 - [x] Fix imported-state persistence so seed restaurants removed during import do not reappear after reopening the app
 - [x] Clarify no-backend group voting as local/pass-and-play simulation until synced rooms are implemented
 - [x] Update Google Maps import guidance to only export `地圖（你的地點）`, add ZIP-or-JSON import support, and move the safety notice into an info-popup dialog
