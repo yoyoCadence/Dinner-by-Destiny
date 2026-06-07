@@ -2,7 +2,7 @@
 const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
 const STORE_KEY = 'dinner_by_destiny_v1';
-const ONBOARDING_VERSION = 3;
+const ONBOARDING_VERSION = 4;
 window.ONBOARDING_VERSION = ONBOARDING_VERSION;
 
 function normalizeUserRestaurant(r) {
