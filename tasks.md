@@ -35,6 +35,7 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## Done
 
+- [x] Add a Settings manual latest-version refresh action that clears only app shell caches while preserving imported local data
 - [x] Add local manual restaurant entry and protect those restaurants from Google Maps import deletions
 - [x] Add a Settings developer-mode reset action for first-run QA
 - [x] Add a PWA update prompt that detects new app versions while preserving local imported restaurant data

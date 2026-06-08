@@ -75,6 +75,7 @@ window.DinnerApp = function App() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [guideStep, setGuideStep] = useState(null); // explore | dice | import
   const [updateReady, setUpdateReady] = useState(null);
+  const [refreshingApp, setRefreshingApp] = useState(false);
   const [toast, setToast] = useState(null);
   const screenRef = useRef(null);
 
@@ -103,6 +104,12 @@ window.DinnerApp = function App() {
   const applyAppUpdate = () => {
     setUpdateReady(null);
     if (window.applyPWAUpdate) window.applyPWAUpdate();
+    else window.location.reload();
+  };
+  const forceRefreshApp = () => {
+    setRefreshingApp(true);
+    showToast('正在更新 App，資料會保留');
+    if (window.forcePWARefresh) window.forcePWARefresh();
     else window.location.reload();
   };
   const resetAppForFirstRun = () => {
@@ -182,6 +189,17 @@ window.DinnerApp = function App() {
           React.createElement('div', { style: { flex: 1 } },
             React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, '重看第一次使用說明'),
             React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '快速導覽、分頁流程與 Google Maps 匯出步驟')
+          ),
+          React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
+        )
+      ),
+      React.createElement('div', { style: { marginBottom: 24 } },
+        React.createElement('h3', { style: { margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: 'var(--ink)' } }, 'App 更新'),
+        React.createElement('button', { onClick: forceRefreshApp, disabled: refreshingApp, style: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '14px', borderRadius: 12, border: '1.5px solid var(--line)', background: refreshingApp ? 'var(--surface-2)' : 'var(--surface)', color: 'var(--ink)', cursor: refreshingApp ? 'wait' : 'pointer', opacity: refreshingApp ? 0.78 : 1 } },
+          React.createElement('span', { style: { fontSize: 24 } }, '↻'),
+          React.createElement('div', { style: { flex: 1 } },
+            React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, refreshingApp ? '正在更新最新版本' : '手動更新最新版本'),
+            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '只更新 App 資源，不會清除已匯入餐廳與紀錄')
           ),
           React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
         )
