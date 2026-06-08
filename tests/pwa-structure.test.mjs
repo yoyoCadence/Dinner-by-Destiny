@@ -50,6 +50,11 @@ assert.equal(version.version, appVersionMatch[1], 'version.json should match win
 assert.ok(html.includes('version.json?ts='), 'PWA should check the latest version without relying on cache');
 assert.ok(html.includes('pwa-update-available'), 'PWA should notify the app when a new version is available');
 assert.ok(html.includes('window.applyPWAUpdate'), 'PWA should expose a user-triggered update action');
+assert.ok(html.includes('window.forcePWARefresh'), 'PWA should expose a force-refresh action for stale mobile app shells');
+assert.ok(html.includes('caches.keys()'), 'Force refresh should clear app shell Cache Storage');
+assert.ok(html.includes('registration.unregister()'), 'Force refresh should unregister stale service workers before reloading');
+assert.ok(html.includes('app_refresh'), 'Force refresh should reload with a cache-busting URL parameter');
+assert.ok(!html.includes('localStorage.clear()'), 'PWA refresh must not clear imported local restaurant data');
 assert.ok(html.includes('width: 100vw; height: 100dvh'), 'mobile viewport should not render inside the desktop phone frame');
 assert.ok(!html.includes('width: 390px'), 'production PWA should not use a fixed phone-preview width');
 assert.ok(!html.includes('height: 844px'), 'production PWA should not use a fixed phone-preview height');
@@ -77,6 +82,9 @@ assert.ok(app.includes('pwa-update-available'), 'App should listen for PWA updat
 assert.ok(app.includes('有新版可以更新'), 'App should show an update prompt when a new version is ready');
 assert.ok(app.includes('已匯入餐廳和紀錄會保留'), 'Update prompt should reassure users that local imported data remains available');
 assert.ok(app.includes('window.applyPWAUpdate'), 'Update prompt should call the service worker update action');
+assert.ok(app.includes('手動更新最新版本'), 'Settings should include a manual latest-version refresh action');
+assert.ok(app.includes('window.forcePWARefresh'), 'Manual refresh action should call the force PWA refresh helper');
+assert.ok(app.includes('不會清除已匯入餐廳與紀錄'), 'Manual refresh copy should promise imported data remains available');
 assert.ok(app.includes('自行新增餐廳'), 'Settings should let users add a restaurant manually');
 assert.ok(app.includes('window.ManualPlaceSheet'), 'Manual restaurant entry should open a dedicated sheet');
 assert.ok(app.includes('開發者模式'), 'Settings should include developer mode');

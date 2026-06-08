@@ -98,7 +98,7 @@
 </div>
 
 <script>
-  window.APP_VERSION = '2026.06.08.2';
+  window.APP_VERSION = '2026.06.08.3';
 </script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -132,6 +132,27 @@
   if ('serviceWorker' in navigator) {
     let refreshingForUpdate = false;
     let pendingRegistration = null;
+
+    window.forcePWARefresh = async function () {
+      refreshingForUpdate = true;
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(function (registration) {
+          return registration.update().catch(function () {});
+        }));
+        await Promise.all(registrations.map(function (registration) {
+          if (registration.waiting) registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          return registration.unregister().catch(function () {});
+        }));
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.filter(function (key) { return /^dinner-by-destiny-v/.test(key); }).map(function (key) { return caches.delete(key); }));
+        }
+      } catch (e) {}
+      const url = new URL(window.location.href);
+      url.searchParams.set('app_refresh', Date.now().toString());
+      window.location.replace(url.toString());
+    };
 
     function notifyAppUpdate(version) {
       window.dispatchEvent(new CustomEvent('pwa-update-available', { detail: { version: version || null } }));
