@@ -28,6 +28,7 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## Done
 
+- [x] Remove the production phone-preview frame so the PWA always renders as a real full-screen app on mobile and desktop
 - [x] Make randomizer pages use the Explore scope instead of owning a city filter, with a help toggle explaining where to adjust the range
 - [x] Redesign first-run guidance as a low-friction demo flow before asking users to import Google Maps data
 - [x] Fix imported-state persistence so seed restaurants removed during import do not reappear after reopening the app

@@ -1,6 +1,6 @@
 /* 今晚吃命 — Service Worker（離線快取）
    改版時把 CACHE 後面的版號 +1，使用者下次開啟就會更新。 */
-const CACHE = 'dinner-by-destiny-v11';
+const CACHE = 'dinner-by-destiny-v12';
 
 const APP_SHELL = [
   'index.html',

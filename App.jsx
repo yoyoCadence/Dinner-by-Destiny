@@ -164,7 +164,6 @@ window.DinnerApp = function App() {
   );
 
   return React.createElement('div', { ref: screenRef, style: { width: '100%', height: '100%', background: 'var(--bg)', overflow: 'hidden', display: 'flex', flexDirection: 'column' } },
-    React.createElement('div', { className: 'app-preview-chrome status', style: { height: 44, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 26px', flexShrink: 0 } }, React.createElement('span', { style: { fontSize: 15, fontWeight: 800, color: 'var(--chrome)', fontFamily: 'var(--font-display)' } }, '18:30')),
     React.createElement('div', { style: { flex: 1, overflow: 'hidden' } }, mainScreen),
     React.createElement('div', { style: { flexShrink: 0, display: 'flex', padding: '8px 8px 0', background: 'var(--surface)', borderTop: '1px solid var(--line)' } },
       btn('explore', '探索', React.createElement(window.Icons.compass, { size: 23 })),
@@ -173,7 +172,6 @@ window.DinnerApp = function App() {
       btn('stats', '統計', React.createElement(window.Icons.chart, { size: 23 })),
       btn('settings', '設定', React.createElement(window.Icons.gear, { size: 23 }))
     ),
-    React.createElement('div', { className: 'app-preview-chrome home', style: { height: 8, flexShrink: 0, background: 'var(--surface)', display: 'grid', placeItems: 'center', paddingBottom: 6 } }, React.createElement('div', { style: { width: 134, height: 5, borderRadius: 5, background: 'var(--chrome)', opacity: .35 } })),
     React.createElement(Sheet, { open: !!detail, onClose: () => setDetail(null) }, detail && React.createElement('div', { style: { padding: '4px 20px 26px' } },
       React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 } },
         React.createElement('span', { style: { fontSize: 48 } }, window.cuisineOf(detail.cuisine).emoji),

@@ -31,17 +31,17 @@
 ## 主題
 
 - `theme.js` 的 `window.THEMES` 定義 4 組 CSS 變數（warm / minimal / dark / playful）。
-- `App.jsx` 用 `window.applyTheme(rootEl, key)` 把變數塞到手機容器的 inline style。
+- `App.jsx` 用 `window.applyTheme(rootEl, key)` 把變數塞到全螢幕 app root 的 inline style。
 - 所有元件**只用 CSS 變數**上色（`var(--accent)`、`var(--ink)`、`var(--surface)`、`var(--line)`、`var(--shadow)`、`var(--radius)`、`var(--font)`、`var(--font-display)` 等）。新增 UI 請沿用這些變數，切換主題才會跟著變。
 
 ## Tweaks 面板
 
-- 用 starter `tweaks-panel.jsx`。`App.jsx` 裡用 `ReactDOM.createPortal(..., document.body)` 把面板掛到 body，**不能掛在手機容器內**（容器有 scale + overflow:hidden 會把面板裁掉）。
+- 用 starter `tweaks-panel.jsx`。`App.jsx` 裡用 `ReactDOM.createPortal(..., document.body)` 把面板掛到 body，避免被 app root 的 `overflow:hidden` 裁掉。
 - 控制項直接讀寫 `store.settings`（不是用 starter 的 `useTweaks`）。
 
-## 手機外殼與縮放
+## PWA 外層容器
 
-- `index.html` 把 `#phone-wrap`（390×844）用 `transform: scale()` 縮放置中。因為有 transform，**position:fixed 的東西會以這個容器為基準**——這就是 Tweaks 要 portal 出去的原因。
+- `index.html` 的 `#phone-wrap` 是正式 PWA 的全螢幕容器：`100vw × 100dvh`，不應再加入 390×844 手機預覽框、假狀態列、假 home indicator，或 `transform: scale()`。
 
 ## 常見修改入口
 
