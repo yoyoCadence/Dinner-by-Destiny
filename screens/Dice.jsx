@@ -35,7 +35,7 @@ function ThreePick({ cards, onPick, onAgain, title, againLabel, guideActive, onG
     React.createElement('div', { style: { display: 'flex', gap: 10, width: '100%', alignItems: 'stretch' } },
       cards.map(function (c, i) { return React.createElement(CardFace, { key: c.r.id, item: c, onPick: onPick, delay: i * 90 }); })
     ),
-    guideActive && React.createElement('button', { onClick: onGuideDone, style: { width: '100%', padding: '13px 16px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '試玩完成，換成我的 Google Maps 餐廳'),
+    guideActive && React.createElement('button', { onClick: onGuideDone, style: { width: '100%', padding: '13px 16px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '換成我的 Google Maps 餐廳'),
     React.createElement('button', { onClick: onAgain, style: { padding: '12px 22px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 700, cursor: 'pointer' } }, againLabel)
   );
 }
@@ -296,7 +296,7 @@ function CardMode({ deal, onResult, guideActive, onGuideDone, autoStart }) {
       cards[1] && React.createElement(FlipCard, { key: '1', item: cards[1], flipped: flipped, selectable: flipped, onPick: onResult, dealDelay: 130, flipDelay: 360 }),
       cards[2] && React.createElement(FlipCard, { key: '2', item: cards[2], flipped: flipped, selectable: flipped, onPick: onResult, dealDelay: 260, flipDelay: 600 })
     ),
-    guideActive && flipped && React.createElement('button', { onClick: onGuideDone, style: { width: '100%', padding: '13px 16px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '試玩完成，換成我的 Google Maps 餐廳'),
+    guideActive && flipped && React.createElement('button', { onClick: onGuideDone, style: { width: '100%', padding: '13px 16px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '換成我的 Google Maps 餐廳'),
     React.createElement('button', { onClick: doDeal, style: { padding: '12px 22px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: flipped ? 1 : 0.4, pointerEvents: flipped ? 'auto' : 'none', transition: 'opacity .3s' } }, '🔀 重新發牌')
   );
 }
@@ -361,7 +361,7 @@ function Dice({ store, onPick, onGroup, guideActive, onGuideDone, onGuideSkip })
               React.createElement('b', { style: { color: 'var(--ink)' } }, '目前範圍：'), ' ', scopeLabel, '。請先到「探索」分頁選城市、距離或料理分類；骰子、拉霸和抽卡會直接從這個範圍內隨機挑餐廳。'
             ),
             guideActive && React.createElement('div', { style: { maxWidth: 310, padding: '12px 14px', borderRadius: 14, background: 'var(--accent-soft)', border: '1.5px solid var(--accent)', color: 'var(--ink)', fontSize: 12.6, lineHeight: 1.55, textAlign: 'left' } },
-              React.createElement('b', null, '現在試著骰一次。'), '這會從剛剛的探索範圍抽三家。看到結果後，再決定要不要換成自己的 Google Maps 清單。',
+              React.createElement('b', null, '讓骰子抽三家。'), '這會從剛剛的探索範圍挑出候選；看到喜歡的就可以直接選。下一步也能換成自己的 Google Maps 清單。',
               React.createElement('button', { onClick: onGuideSkip, style: { display: 'block', marginTop: 9, padding: '8px 11px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 12, fontWeight: 800, cursor: 'pointer' } }, '我自己玩')
             ),
             React.createElement('button', { onClick: function () { setStage('play'); }, style: { padding: '18px 40px', borderRadius: 20, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 20, fontWeight: 800, cursor: 'pointer', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' } }, diceStyle === 'dice' ? '🎲 開始骰' : diceStyle === 'slot' ? '🎰 進入拉霸' : '🎴 開始抽卡')

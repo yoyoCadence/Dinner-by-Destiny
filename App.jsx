@@ -11,15 +11,15 @@ function OnboardingSheet({ onStart, onImport, onClose }) {
   const titleStyle = { margin: '0 0 4px', fontSize: 14.5, fontWeight: 850, color: 'var(--ink)' };
   const textStyle = { margin: 0, fontSize: 12.8, color: 'var(--ink-soft)', lineHeight: 1.6 };
   const steps = [
-    { n: '1', title: '先用示範餐廳選範圍', text: '不用先準備資料。到「探索」點城市、距離或料理，先感受候選清單怎麼縮小。' },
-    { n: '2', title: '立刻骰一次', text: '骰子會直接套用探索範圍，抽出三家讓你挑。先玩到一次結果，再決定要不要個人化。' },
-    { n: '3', title: '覺得有用，再匯入自己的 Google Maps', text: '匯入後示範餐廳會換成你儲存、評論過的餐廳；可直接用 Takeout .zip。' },
+    { n: '1', title: '先挑今天的範圍', text: '到「探索」點城市、距離或料理，候選清單會跟著縮小。' },
+    { n: '2', title: '讓骰子抽三家', text: '骰子會直接套用探索範圍，抽出三家讓你挑。' },
+    { n: '3', title: '換成你的常去清單', text: '之後可匯入 Google Maps 儲存、評論過的餐廳；可直接用 Takeout .zip。' },
   ];
   return React.createElement('div', { style: { padding: '4px 18px 22px', display: 'flex', flexDirection: 'column', gap: 14 } },
     React.createElement('div', { style: { padding: '18px 16px', borderRadius: 18, background: 'var(--accent-soft)', border: '1.5px solid var(--accent)' } },
       React.createElement('div', { style: { fontSize: 30, marginBottom: 8 } }, '🍽️'),
-      React.createElement('h2', { style: { margin: '0 0 7px', fontSize: 21, fontWeight: 900, color: 'var(--ink)', fontFamily: 'var(--font-display)' } }, '先試玩 30 秒，再決定要不要匯入'),
-      React.createElement('p', { style: { margin: 0, fontSize: 13.2, lineHeight: 1.65, color: 'var(--ink)' } }, '今晚吃命會用餐廳清單幫你縮小選擇，再用骰子、拉霸或抽卡做晚餐決策。第一次先用內建資料走一遍就好。')
+      React.createElement('h2', { style: { margin: '0 0 7px', fontSize: 21, fontWeight: 900, color: 'var(--ink)', fontFamily: 'var(--font-display)' } }, '今晚吃哪間？先讓命運幫你縮小選擇'),
+      React.createElement('p', { style: { margin: 0, fontSize: 13.2, lineHeight: 1.65, color: 'var(--ink)' } }, '從一份餐廳清單開始，先選今天的範圍，再用骰子、拉霸或抽卡挑出幾個候選。')
     ),
     React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 9 } },
       steps.map(function (s) {
@@ -34,11 +34,11 @@ function OnboardingSheet({ onStart, onImport, onClose }) {
     ),
     React.createElement('div', { style: { padding: '13px 14px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--line)' } },
       React.createElement('p', { style: titleStyle }, 'Google Maps 匯出在哪裡？'),
-      React.createElement('p', { style: textStyle }, '等你試玩後想換成自己的清單，再打開 ', React.createElement(TakeoutLink), ' → 建立新匯出 → 取消全選 → 只勾「地圖（你的地點）」，不要勾上方的「地圖」。')
+      React.createElement('p', { style: textStyle }, '想放進自己的餐廳時，打開 ', React.createElement(TakeoutLink), ' → 建立新匯出 → 取消全選 → 只勾「地圖（你的地點）」，不要勾上方的「地圖」。')
     ),
     React.createElement('div', { style: { display: 'flex', gap: 10, paddingTop: 2 } },
       React.createElement('button', { onClick: onClose, style: { flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 800, cursor: 'pointer' } }, '先逛逛'),
-      React.createElement('button', { onClick: onStart, style: { flex: 1.4, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '開始 30 秒試玩')
+      React.createElement('button', { onClick: onStart, style: { flex: 1.4, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '開始選今晚吃什麼')
     )
   );
 }
@@ -49,15 +49,15 @@ function ImportPromptSheet({ onImport, onClose }) {
     React.createElement('div', { style: { padding: '18px 16px', borderRadius: 18, background: 'var(--accent-soft)', border: '1.5px solid var(--accent)' } },
       React.createElement('div', { style: { fontSize: 30, marginBottom: 8 } }, '🎉'),
       React.createElement('h2', { style: { margin: '0 0 7px', fontSize: 21, fontWeight: 900, color: 'var(--ink)', fontFamily: 'var(--font-display)' } }, '玩法就是這樣'),
-      React.createElement('p', { style: { margin: 0, fontSize: 13.2, lineHeight: 1.65, color: 'var(--ink)' } }, '如果剛剛這個流程有幫你少想一點，下一步就把示範餐廳換成你自己的 Google Maps 清單。')
+      React.createElement('p', { style: { margin: 0, fontSize: 13.2, lineHeight: 1.65, color: 'var(--ink)' } }, '接下來可以把候選餐廳換成你自己的 Google Maps 清單，之後每次打開都從熟悉的店裡挑。')
     ),
     React.createElement('div', { style: { padding: '13px 14px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--line)' } },
       React.createElement('p', { style: { margin: '0 0 4px', fontSize: 14.5, fontWeight: 850, color: 'var(--ink)' } }, '匯出資料'),
       React.createElement('p', { style: textStyle }, '打開 ', React.createElement(TakeoutLink), ' → 建立新匯出 → 取消全選 → 只勾「地圖（你的地點）」→ 下一步 → 建立匯出。下載後可直接匯入 .zip，也可以解壓縮後匯入「評論.json」和「已儲存的地點.json」。')
     ),
     React.createElement('div', { style: { display: 'flex', gap: 10, paddingTop: 2 } },
-      React.createElement('button', { onClick: onClose, style: { flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 800, cursor: 'pointer' } }, '先用示範資料'),
-      React.createElement('button', { onClick: onImport, style: { flex: 1.3, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '去匯入資料')
+      React.createElement('button', { onClick: onClose, style: { flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 800, cursor: 'pointer' } }, '先繼續逛'),
+      React.createElement('button', { onClick: onImport, style: { flex: 1.3, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '匯入我的餐廳')
     )
   );
 }
@@ -146,7 +146,7 @@ window.DinnerApp = function App() {
           React.createElement('span', { style: { fontSize: 24 } }, '❔'),
           React.createElement('div', { style: { flex: 1 } },
             React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, '重看第一次使用說明'),
-            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '30 秒試玩、分頁流程與 Google Maps 匯出步驟')
+            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '快速導覽、分頁流程與 Google Maps 匯出步驟')
           ),
           React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
         )

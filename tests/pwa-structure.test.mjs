@@ -53,8 +53,10 @@ assert.ok(app.includes('只勾「地圖（你的地點）」'), 'Onboarding shou
 assert.ok(app.includes('不要勾上方的「地圖」'), 'Onboarding should warn users not to export the broader Maps item');
 assert.ok(app.includes('評論.json') && app.includes('已儲存的地點.json'), 'Onboarding should name the import files users need');
 assert.ok(app.includes('可直接用 Takeout .zip'), 'Onboarding should tell users they can import the Takeout zip directly');
-assert.ok(app.includes('先試玩 30 秒'), 'Onboarding should invite users to try the app before importing data');
-assert.ok(app.includes('開始 30 秒試玩'), 'Onboarding should offer a low-friction guided demo action');
+assert.ok(app.includes('今晚吃哪間？先讓命運幫你縮小選擇'), 'Onboarding should frame the first run around the dinner decision');
+assert.ok(app.includes('開始選今晚吃什麼'), 'Onboarding should offer a natural guided action');
+assert.ok(!app.includes('先試玩 30 秒'), 'Onboarding should not make the demo framing feel forced');
+assert.ok(!app.includes('決定要不要匯入'), 'Onboarding should not over-explain the import decision');
 assert.ok(app.includes("guideStep === 'explore'"), 'Guided demo should start by sending users to Explore');
 assert.ok(app.includes("guideStep === 'dice'"), 'Guided demo should continue to Dice');
 assert.ok(app.includes("guideStep === 'import'"), 'Guided demo should ask about import only after trying the randomizer');
@@ -63,8 +65,9 @@ assert.ok(explore.includes('先選一個範圍'), 'Explore should include a guid
 assert.ok(explore.includes('用目前範圍去骰一次'), 'Explore guided prompt should send users to the randomizer');
 assert.ok(dice.includes('showScopeHelp'), 'Dice page should show randomizer scope help behind a toggle');
 assert.ok(dice.includes('請先到「探索」分頁選城市、距離或料理分類'), 'Dice scope help should point users back to Explore filters');
-assert.ok(dice.includes('現在試著骰一次'), 'Dice should include a guided demo prompt');
-assert.ok(dice.includes('試玩完成，換成我的 Google Maps 餐廳'), 'Dice result should offer import only after the guided demo result');
+assert.ok(dice.includes('讓骰子抽三家'), 'Dice should include a guided prompt');
+assert.ok(dice.includes('換成我的 Google Maps 餐廳'), 'Dice result should offer import only after the guided result');
+assert.ok(!dice.includes('試玩完成'), 'Dice result should not use forced demo wording');
 assert.ok(!dice.includes("store.setSetting('city'"), 'Dice page should not own the city filter');
 assert.ok(importSheet.includes('multiple: true'), 'Google Maps import input should allow selecting saved places and reviews together');
 assert.ok(importSheet.includes('.zip,application/zip'), 'Google Maps import input should accept Takeout zip archives');
