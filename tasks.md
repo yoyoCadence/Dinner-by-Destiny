@@ -17,7 +17,13 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 ## Backlog
 
 - [ ] Create an approved migration plan for future changes beyond the imported baseline
-- [ ] Plan nearby popular-restaurant discovery with user-selected location, adjustable radius, privacy copy, and a backend/API-key strategy before implementation
+- [ ] Design the nearby popular-restaurant API contract: backend-only Google Places access, request quota limits, field masks, response shape, and error states
+- [ ] Add common-location settings for nearby discovery: current device location permission, manual address/common-point entry, and radius choices of 1 / 3 / 6 / 10 km
+- [ ] Build a backend Places proxy for nearby discovery using Text Search queries such as restaurant plus fallback cuisine/category queries, without exposing API keys in the PWA
+- [ ] Implement nearby candidate collection that deduplicates by place id, filters by selected radius, targets roughly 60-150 candidates, and supports a user-triggered "find more" action
+- [ ] Rank nearby candidates by a popularity score based on rating, userRatingCount, and distance, avoiding over-ranking very high ratings with very few reviews
+- [ ] Add a nearby-candidates review UI so users choose which restaurants to save; saved nearby places must use a non-Google-import source and must not be removed by later Takeout imports
+- [ ] Add tests for nearby discovery scoring, dedupe, radius filtering, quota-aware request limits, and local persistence of saved nearby/manual restaurants
 - [ ] Add restaurant/place classification and simple filtering by range or context
 - [ ] Plan the Supabase schema and RLS policies for local-first opt-in sync, covering profiles, places, tags, meal logs, settings, import batches, import items, randomizer sessions, groups, members, and votes
 - [ ] Add Supabase project foundation: environment template, client initialization, migrations, and user-owned RLS policies without exposing service-role keys in the PWA
