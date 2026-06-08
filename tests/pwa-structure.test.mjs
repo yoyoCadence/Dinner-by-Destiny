@@ -42,9 +42,13 @@ assert.ok(html.includes('<meta name="apple-mobile-web-app-title" content="今晚
 assert.ok(html.includes('<title>今晚吃命</title>'));
 assert.ok(html.includes('navigator.serviceWorker.register(\'sw.js\')'));
 assert.ok(html.includes('width: 100vw; height: 100dvh'), 'mobile viewport should not render inside the desktop phone frame');
-assert.ok(html.includes('@media (min-width: 640px)'), 'desktop phone frame should be limited to wide viewports');
+assert.ok(!html.includes('width: 390px'), 'production PWA should not use a fixed phone-preview width');
+assert.ok(!html.includes('height: 844px'), 'production PWA should not use a fixed phone-preview height');
+assert.ok(!html.includes('border-radius: 54px'), 'production PWA should not render a decorative phone frame');
+assert.ok(!html.includes('app-preview-chrome'), 'production PWA should not include fake phone chrome CSS');
+assert.ok(!html.includes('function fit()'), 'production PWA should not scale a desktop phone mockup');
 assert.ok(app.includes("width: '100%'"));
-assert.ok(app.includes("className: 'app-preview-chrome status'"));
+assert.ok(!app.includes('app-preview-chrome'), 'App should not render fake status/home bars');
 assert.ok(app.includes('第一次使用說明'), 'App should include a first-run onboarding sheet');
 assert.ok(app.includes('重看第一次使用說明'), 'Settings should let users reopen onboarding');
 assert.ok(app.includes('takeout.google.com'), 'Onboarding should point users to Google Takeout');

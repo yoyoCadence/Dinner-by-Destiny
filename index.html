@@ -21,27 +21,15 @@
     background: #18161f;
     background-image: radial-gradient(120% 90% at 50% 0%, #26222e 0%, #18161f 60%, #0f0e14 100%);
     font-family: 'Noto Sans TC', system-ui, sans-serif;
-    display: grid; place-items: center; overflow: hidden;
+    overflow: hidden;
   }
-  #stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  #stage { position: fixed; inset: 0; }
   #phone-wrap {
-    width: 100vw; height: 100dvh; flex-shrink: 0;
-    border-radius: 0; padding: 0; background: transparent;
-    box-shadow: none;
+    width: 100vw; height: 100dvh;
+    background: transparent;
     overflow: hidden; position: relative;
   }
   #root { width: 100%; height: 100%; border-radius: 0; overflow: hidden; }
-  .app-preview-chrome { display: none !important; }
-  @media (min-width: 640px) {
-    #phone-wrap {
-      width: 390px; height: 844px;
-      border-radius: 54px; background: #000;
-      box-shadow: 0 0 0 12px #1b1b1f, 0 0 0 14px #2c2c30, 0 40px 90px -20px rgba(0,0,0,.7);
-    }
-    #root { border-radius: 42px; }
-    .app-preview-chrome.status { display: flex !important; }
-    .app-preview-chrome.home { display: grid !important; }
-  }
 
   input[type=range].radslider {
     -webkit-appearance: none; appearance: none; height: 6px; border-radius: 99px;
@@ -135,19 +123,6 @@
     root.render(React.createElement(window.DinnerApp));
   }
   mount();
-
-  function fit() {
-    const wrap = document.getElementById('phone-wrap');
-    if (window.innerWidth < 640) {
-      wrap.style.transform = 'none';
-      return;
-    }
-    const pad = 24;
-    const s = Math.min((window.innerWidth - pad) / 390, (window.innerHeight - pad) / 844, 1);
-    wrap.style.transform = 'scale(' + s + ')';
-  }
-  window.addEventListener('resize', fit);
-  fit();
 </script>
 <script>
   if ('serviceWorker' in navigator) {
