@@ -6,7 +6,9 @@ const app = readFileSync('App.jsx', 'utf8');
 const dice = readFileSync('screens/Dice.jsx', 'utf8');
 const explore = readFileSync('screens/Explore.jsx', 'utf8');
 const importSheet = readFileSync('screens/ImportSheet.jsx', 'utf8');
+const manualSheet = readFileSync('screens/ManualPlaceSheet.jsx', 'utf8');
 const sw = readFileSync('sw.js', 'utf8');
+const version = JSON.parse(readFileSync('version.json', 'utf8'));
 const manifest = JSON.parse(readFileSync('manifest.webmanifest', 'utf8'));
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const gitignore = readFileSync('.gitignore', 'utf8');
@@ -27,6 +29,7 @@ const expectedScriptOrder = [
   'screens/Stats.jsx',
   'screens/Group.jsx',
   'screens/ImportSheet.jsx',
+  'screens/ManualPlaceSheet.jsx',
   'App.jsx',
 ];
 
@@ -41,6 +44,12 @@ for (const file of expectedScriptOrder) {
 assert.ok(html.includes('<meta name="apple-mobile-web-app-title" content="今晚吃命" />'));
 assert.ok(html.includes('<title>今晚吃命</title>'));
 assert.ok(html.includes('navigator.serviceWorker.register(\'sw.js\')'));
+const appVersionMatch = html.match(/window\.APP_VERSION = '([^']+)'/);
+assert.ok(appVersionMatch, 'index.html should expose the current app version');
+assert.equal(version.version, appVersionMatch[1], 'version.json should match window.APP_VERSION');
+assert.ok(html.includes('version.json?ts='), 'PWA should check the latest version without relying on cache');
+assert.ok(html.includes('pwa-update-available'), 'PWA should notify the app when a new version is available');
+assert.ok(html.includes('window.applyPWAUpdate'), 'PWA should expose a user-triggered update action');
 assert.ok(html.includes('width: 100vw; height: 100dvh'), 'mobile viewport should not render inside the desktop phone frame');
 assert.ok(!html.includes('width: 390px'), 'production PWA should not use a fixed phone-preview width');
 assert.ok(!html.includes('height: 844px'), 'production PWA should not use a fixed phone-preview height');
@@ -64,6 +73,16 @@ assert.ok(!app.includes('決定要不要匯入'), 'Onboarding should not over-ex
 assert.ok(app.includes("guideStep === 'explore'"), 'Guided demo should start by sending users to Explore');
 assert.ok(app.includes("guideStep === 'dice'"), 'Guided demo should continue to Dice');
 assert.ok(app.includes("guideStep === 'import'"), 'Guided demo should ask about import only after trying the randomizer');
+assert.ok(app.includes('pwa-update-available'), 'App should listen for PWA update notifications');
+assert.ok(app.includes('有新版可以更新'), 'App should show an update prompt when a new version is ready');
+assert.ok(app.includes('已匯入餐廳和紀錄會保留'), 'Update prompt should reassure users that local imported data remains available');
+assert.ok(app.includes('window.applyPWAUpdate'), 'Update prompt should call the service worker update action');
+assert.ok(app.includes('自行新增餐廳'), 'Settings should let users add a restaurant manually');
+assert.ok(app.includes('window.ManualPlaceSheet'), 'Manual restaurant entry should open a dedicated sheet');
+assert.ok(app.includes('開發者模式'), 'Settings should include developer mode');
+assert.ok(app.includes('重設 App'), 'Developer mode should include a reset App action');
+assert.ok(app.includes('store.resetAll()'), 'Reset App should return local state to the first-run defaults');
+assert.ok(app.includes('第一次使用狀態'), 'Reset App should clearly describe the first-run testing state');
 assert.ok(explore.includes("store.setSetting('cuisine'"), 'Explore cuisine filter should persist for randomizer scope');
 assert.ok(explore.includes('先選一個範圍'), 'Explore should include a guided demo prompt for selecting scope');
 assert.ok(explore.includes('用目前範圍去骰一次'), 'Explore guided prompt should send users to the randomizer');
@@ -90,6 +109,11 @@ assert.ok(importSheet.includes('避免不必要的個人敏感資料疑慮'), 'S
 assert.ok(!importSheet.includes('可能含有額外個人資料'), 'Safety notice should not use overly alarming copy');
 assert.ok(importSheet.includes('includeNonFood: true'), 'Import review should include excluded places so users can correct classifier mistakes');
 assert.ok(importSheet.includes('showSkipped'), 'Import review should let users expand the excluded-place list');
+assert.ok(importSheet.includes("r.source !== 'manual'"), 'Import diff should not offer to delete manually added restaurants');
+assert.ok(manualSheet.includes('parseMapsUrl'), 'Manual restaurant sheet should try to parse common Google Maps URLs');
+assert.ok(manualSheet.includes('先填店名就可以新增'), 'Manual restaurant sheet should require only a restaurant name');
+assert.ok(manualSheet.includes('mapUrl: mapUrl.trim()'), 'Manual restaurant sheet should preserve the original Maps URL');
+assert.ok(manualSheet.includes('不會在下次匯入 Google Maps 清單時被自動刪除'), 'Manual restaurant sheet should explain import deletion protection');
 assert.ok(!html.includes('晚餐選擇</title>'));
 
 const cacheMatch = sw.match(/const CACHE = '([^']+)'/);
@@ -97,6 +121,12 @@ assert.ok(cacheMatch);
 assert.match(cacheMatch[1], /^dinner-by-destiny-v\d+$/);
 assert.ok(agents.includes(cacheMatch[1]), 'AGENTS.md cache note should match sw.js CACHE');
 assert.ok(!sw.includes('screens/Sheets.jsx'), 'service worker must not cache missing Sheets screen');
+assert.ok(sw.includes('version.json'), 'service worker should cache the app version file');
+assert.ok(sw.includes("type === 'SKIP_WAITING'"), 'service worker should only activate a waiting update after the user accepts');
+const installStart = sw.indexOf("self.addEventListener('install'");
+const messageStart = sw.indexOf("self.addEventListener('message'");
+const installBlock = sw.slice(installStart, messageStart);
+assert.ok(!installBlock.includes('self.skipWaiting()'), 'service worker install should not force-refresh without user action');
 
 const appShellBlock = sw.match(/const APP_SHELL = \[([\s\S]*?)\];/);
 assert.ok(appShellBlock);

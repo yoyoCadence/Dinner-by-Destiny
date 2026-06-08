@@ -1,9 +1,10 @@
 /* 今晚吃命 — Service Worker（離線快取）
    改版時把 CACHE 後面的版號 +1，使用者下次開啟就會更新。 */
-const CACHE = 'dinner-by-destiny-v12';
+const CACHE = 'dinner-by-destiny-v14';
 
 const APP_SHELL = [
   'index.html',
+  'version.json',
   'manifest.webmanifest',
   'data.js',
   'theme.js',
@@ -19,6 +20,7 @@ const APP_SHELL = [
   'screens/Stats.jsx',
   'screens/Group.jsx',
   'screens/ImportSheet.jsx',
+  'screens/ManualPlaceSheet.jsx',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/icon-maskable-512.png',
@@ -38,8 +40,11 @@ self.addEventListener('install', (e) => {
     const cache = await caches.open(CACHE);
     await cache.addAll(APP_SHELL);
     await Promise.allSettled(VENDOR.map((u) => cache.add(new Request(u, { mode: 'no-cors' }))));
-    self.skipWaiting();
   })());
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
