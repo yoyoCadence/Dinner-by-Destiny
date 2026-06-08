@@ -17,6 +17,7 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 ## Backlog
 
 - [ ] Create an approved migration plan for future changes beyond the imported baseline
+- [ ] Plan nearby popular-restaurant discovery with user-selected location, adjustable radius, privacy copy, and a backend/API-key strategy before implementation
 - [ ] Add restaurant/place classification and simple filtering by range or context
 - [ ] Plan the Supabase schema and RLS policies for local-first opt-in sync, covering profiles, places, tags, meal logs, settings, import batches, import items, randomizer sessions, groups, members, and votes
 - [ ] Add Supabase project foundation: environment template, client initialization, migrations, and user-owned RLS policies without exposing service-role keys in the PWA
@@ -28,6 +29,9 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## Done
 
+- [x] Add local manual restaurant entry and protect those restaurants from Google Maps import deletions
+- [x] Add a Settings developer-mode reset action for first-run QA
+- [x] Add a PWA update prompt that detects new app versions while preserving local imported restaurant data
 - [x] Remove the production phone-preview frame so the PWA always renders as a real full-screen app on mobile and desktop
 - [x] Make randomizer pages use the Explore scope instead of owning a city filter, with a help toggle explaining where to adjust the range
 - [x] Redesign first-run guidance as a low-friction demo flow before asking users to import Google Maps data

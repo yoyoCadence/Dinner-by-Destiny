@@ -18,12 +18,13 @@ function fakeImport(current) {
 }
 
 function diffImport(current, imported) {
+  const importManagedCurrent = current.filter(function (r) { return r.source !== 'manual'; });
   const curById = {};
-  current.forEach(function (r) { curById[r.id] = r; });
+  importManagedCurrent.forEach(function (r) { curById[r.id] = r; });
   const impById = {};
   imported.forEach(function (r) { impById[r.id] = r; });
   const add = imported.filter(function (r) { return !curById[r.id]; });
-  const remove = current.filter(function (r) { return !impById[r.id]; });
+  const remove = importManagedCurrent.filter(function (r) { return !impById[r.id]; });
   return { add: add, remove: remove };
 }
 

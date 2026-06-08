@@ -70,9 +70,11 @@ window.DinnerApp = function App() {
   const [logPreset, setLogPreset] = useState(null);
   const [groupOpen, setGroupOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const [editEntry, setEditEntry] = useState(null);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [guideStep, setGuideStep] = useState(null); // explore | dice | import
+  const [updateReady, setUpdateReady] = useState(null);
   const [toast, setToast] = useState(null);
   const screenRef = useRef(null);
 
@@ -81,6 +83,11 @@ window.DinnerApp = function App() {
 
   const openDetail = r => setDetail(r);
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(null), 2200); };
+  useEffect(() => {
+    const onUpdateReady = (event) => setUpdateReady({ version: event.detail && event.detail.version });
+    window.addEventListener('pwa-update-available', onUpdateReady);
+    return () => window.removeEventListener('pwa-update-available', onUpdateReady);
+  }, []);
   const pickToEat = item => {
     const r = item.r || item;
     setDetail(null); setGroupOpen(false);
@@ -93,6 +100,26 @@ window.DinnerApp = function App() {
   const startGuidedTry = () => { setOnboardingOpen(false); store.completeOnboarding(); setGuideStep('explore'); setTab('explore'); };
   const importFromOnboarding = () => { closeOnboarding(); setGuideStep(null); setTab('settings'); setImportOpen(true); };
   const closeImportPrompt = () => { setGuideStep(null); };
+  const applyAppUpdate = () => {
+    setUpdateReady(null);
+    if (window.applyPWAUpdate) window.applyPWAUpdate();
+    else window.location.reload();
+  };
+  const resetAppForFirstRun = () => {
+    if (!window.confirm('重設後會清除這台裝置目前匯入的餐廳、用餐紀錄與設定，回到第一次使用狀態。確定要重設嗎？')) return;
+    store.resetAll();
+    setDetail(null);
+    setLogOpen(false);
+    setLogPreset(null);
+    setGroupOpen(false);
+    setImportOpen(false);
+    setManualOpen(false);
+    setEditEntry(null);
+    setOnboardingOpen(false);
+    setGuideStep(null);
+    setTab('dice');
+    showToast('已重設為第一次使用狀態');
+  };
 
   const getDiceIcon = () => {
     const style = store.state.settings.diceStyle;
@@ -131,6 +158,14 @@ window.DinnerApp = function App() {
       ),
       React.createElement('div', { style: { marginBottom: 24 } },
         React.createElement('h3', { style: { margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: 'var(--ink)' } }, '餐廳資料'),
+        React.createElement('button', { onClick: () => setManualOpen(true), style: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer', marginBottom: 8 } },
+          React.createElement('span', { style: { fontSize: 24 } }, '➕'),
+          React.createElement('div', { style: { flex: 1 } },
+            React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, '自行新增餐廳'),
+            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '只填店名也能新增，可貼 Google Maps 連結')
+          ),
+          React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
+        ),
         React.createElement('button', { onClick: () => setImportOpen(true), style: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' } },
           React.createElement('span', { style: { fontSize: 24 } }, '🗺️'),
           React.createElement('div', { style: { flex: 1 } },
@@ -151,6 +186,17 @@ window.DinnerApp = function App() {
           React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
         )
       ),
+      React.createElement('div', { style: { marginBottom: 24 } },
+        React.createElement('h3', { style: { margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: 'var(--ink)' } }, '開發者模式'),
+        React.createElement('button', { onClick: resetAppForFirstRun, style: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' } },
+          React.createElement('span', { style: { fontSize: 24 } }, '🧪'),
+          React.createElement('div', { style: { flex: 1 } },
+            React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, '重設 App'),
+            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '清除本機匯入資料與紀錄，回到第一次使用視角')
+          ),
+          React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
+        )
+      ),
       React.createElement('div', { style: { padding: 12, background: 'var(--surface)', borderRadius: 12, fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.6 } },
         React.createElement('p', { style: { margin: 0, fontWeight: 700, marginBottom: 6 } }, '💡 關於應用'),
         React.createElement('p', { style: { margin: 0 } }, '今晚吃命 v1.0 · 幫你決定今天吃什麼')
@@ -163,7 +209,7 @@ window.DinnerApp = function App() {
     React.createElement('span', { style: { fontSize: 10.5, fontWeight: tab === key ? 800 : 600 } }, label)
   );
 
-  return React.createElement('div', { ref: screenRef, style: { width: '100%', height: '100%', background: 'var(--bg)', overflow: 'hidden', display: 'flex', flexDirection: 'column' } },
+  return React.createElement('div', { ref: screenRef, style: { width: '100%', height: '100%', background: 'var(--bg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' } },
     React.createElement('div', { style: { flex: 1, overflow: 'hidden' } }, mainScreen),
     React.createElement('div', { style: { flexShrink: 0, display: 'flex', padding: '8px 8px 0', background: 'var(--surface)', borderTop: '1px solid var(--line)' } },
       btn('explore', '探索', React.createElement(window.Icons.compass, { size: 23 })),
@@ -209,9 +255,18 @@ window.DinnerApp = function App() {
     React.createElement(Sheet, { open: logOpen, onClose: () => setLogOpen(false), title: '記錄這一餐', full: true }, React.createElement(window.LogSheet, { store, preset: logPreset, onClose: () => { setLogOpen(false); showToast('已記錄 ✅'); } })),
     React.createElement(Sheet, { open: groupOpen, onClose: () => setGroupOpen(false), title: '和朋友一起骰', full: true }, React.createElement(window.Group, { store, onClose: () => setGroupOpen(false), onPick: pickToEat })),
     React.createElement(Sheet, { open: importOpen, onClose: () => setImportOpen(false), title: '匯入餐廳資料', full: true }, React.createElement(window.ImportSheet, { store, onClose: () => { setImportOpen(false); showToast('餐廳清單已更新 ✅'); } })),
+    React.createElement(Sheet, { open: manualOpen, onClose: () => setManualOpen(false), title: '自行新增餐廳', full: true }, React.createElement(window.ManualPlaceSheet, { store, onClose: () => { setManualOpen(false); showToast('已新增餐廳 ✅'); } })),
     React.createElement(Sheet, { open: guideStep === 'import', onClose: closeImportPrompt, title: '換成你的餐廳', full: true }, React.createElement(ImportPromptSheet, { onImport: importFromOnboarding, onClose: closeImportPrompt })),
     React.createElement(Sheet, { open: needsOnboarding || onboardingOpen, onClose: closeOnboarding, title: '第一次使用說明', full: true }, React.createElement(OnboardingSheet, { onStart: startGuidedTry, onImport: importFromOnboarding, onClose: closeOnboarding })),
     React.createElement(Sheet, { open: !!editEntry, onClose: () => setEditEntry(null), title: '編輯這一餐', full: true }, editEntry && React.createElement(window.DiaryEditSheet, { store, entry: editEntry, onClose: () => setEditEntry(null) })),
+    updateReady && React.createElement('div', { style: { position: 'absolute', left: 14, right: 14, bottom: 82, zIndex: 90, padding: '13px 14px', borderRadius: 16, background: 'var(--surface)', border: '1.5px solid var(--accent)', boxShadow: 'var(--shadow)', display: 'flex', alignItems: 'center', gap: 12 } },
+      React.createElement('div', { style: { flex: 1, minWidth: 0 } },
+        React.createElement('div', { style: { fontSize: 14, fontWeight: 900, color: 'var(--ink)', marginBottom: 3 } }, '有新版可以更新'),
+        React.createElement('div', { style: { fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.45 } }, '更新只會重新載入 App，已匯入餐廳和紀錄會保留在這台裝置。')
+      ),
+      React.createElement('button', { onClick: () => setUpdateReady(null), style: { flexShrink: 0, padding: '10px 11px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--ink)', fontSize: 12, fontWeight: 800, cursor: 'pointer' } }, '稍後'),
+      React.createElement('button', { onClick: applyAppUpdate, style: { flexShrink: 0, padding: '10px 12px', borderRadius: 12, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 12, fontWeight: 900, cursor: 'pointer' } }, '立即更新')
+    ),
     toast && React.createElement('div', { style: { position: 'absolute', bottom: 96, left: '50%', transform: 'translateX(-50%)', background: 'var(--chrome)', color: 'var(--bg)', padding: '11px 18px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, whiteSpace: 'nowrap', zIndex: 80, boxShadow: '0 8px 24px rgba(0,0,0,.3)' } }, toast)
   );
 };

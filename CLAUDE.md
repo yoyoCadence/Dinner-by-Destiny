@@ -18,7 +18,7 @@
 
 4. **載入順序固定在 `index.html`**：純 JS（`data.js`、`theme.js`）→ `tweaks-panel.jsx` → `store.jsx` → `icons.jsx` → `bits.jsx` → `screens/*.jsx` → `App.jsx` → 掛載。新增元件檔記得在這裡加 `<script>`，**也要加進 `sw.js` 的 `APP_SHELL`**（否則離線時抓不到）。
 
-5. 改了 `sw.js` 的快取內容，記得把 `const CACHE = 'dinner-by-destiny-vN'` 版號 +1，使用者下次開啟才會更新。
+5. 改了 `sw.js` 的快取內容，記得把 `const CACHE = 'dinner-by-destiny-vN'` 版號 +1，並同步更新 `window.APP_VERSION` 與 `version.json`，使用者下次開啟才會看到可手動套用的新版提示。
 
 ## 資料流
 

@@ -118,6 +118,29 @@ function renderFreshStore(options) {
 }
 
 {
+  const { env, store } = renderFreshStore();
+  const seedId = store.state.restaurants[0].id;
+  env.renderStore().addManualRestaurant({
+    name: '手動新增餐廳應保留',
+    cuisine: 'taiwanese',
+    city: '台北',
+    addr: '公司附近',
+    lat: 0,
+    lng: 0,
+    mapUrl: 'https://maps.app.goo.gl/manual',
+  });
+  let next = env.renderStore().state;
+  const manual = next.restaurants.find((r) => r.name === '手動新增餐廳應保留');
+  assert.ok(manual, 'manual restaurant should be added');
+  assert.equal(manual.source, 'manual');
+  assert.equal(manual.mapUrl, 'https://maps.app.goo.gl/manual');
+  env.renderStore().applyImport([], [manual.id, seedId]);
+  next = env.renderStore().state;
+  assert.ok(next.restaurants.some((r) => r.id === manual.id), 'manual restaurants should not be removed by Google Maps import deletion');
+  assert.equal(next.restaurants.some((r) => r.id === seedId), false, 'import-managed restaurants can still be removed');
+}
+
+{
   const seed = createStoreHarness().window.SEED_RESTAURANTS[0];
   const storedState = {
     restaurants: [
