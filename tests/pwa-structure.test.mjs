@@ -130,11 +130,12 @@ assert.match(cacheMatch[1], /^dinner-by-destiny-v\d+$/);
 assert.ok(agents.includes(cacheMatch[1]), 'AGENTS.md cache note should match sw.js CACHE');
 assert.ok(!sw.includes('screens/Sheets.jsx'), 'service worker must not cache missing Sheets screen');
 assert.ok(sw.includes('version.json'), 'service worker should cache the app version file');
-assert.ok(sw.includes("type === 'SKIP_WAITING'"), 'service worker should only activate a waiting update after the user accepts');
+assert.ok(sw.includes("type === 'SKIP_WAITING'"), 'service worker should still support the user-triggered update message');
 const installStart = sw.indexOf("self.addEventListener('install'");
 const messageStart = sw.indexOf("self.addEventListener('message'");
 const installBlock = sw.slice(installStart, messageStart);
-assert.ok(!installBlock.includes('self.skipWaiting()'), 'service worker install should not force-refresh without user action');
+assert.ok(installBlock.includes('self.skipWaiting()'), 'service worker install should activate updated app shells without depending on stale UI');
+assert.ok(sw.includes('self.clients.claim()'), 'activated service worker should claim existing clients so stale mobile shells reload');
 
 const appShellBlock = sw.match(/const APP_SHELL = \[([\s\S]*?)\];/);
 assert.ok(appShellBlock);
