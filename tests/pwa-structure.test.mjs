@@ -14,6 +14,7 @@ const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const gitignore = readFileSync('.gitignore', 'utf8');
 const agents = readFileSync('AGENTS.md', 'utf8');
 const deployWorkflow = readFileSync('.github/workflows/deploy-pages.yml', 'utf8');
+const pagesArtifactScript = readFileSync('scripts/prepare-pages-artifact.mjs', 'utf8');
 
 const expectedScriptOrder = [
   'data.js',
@@ -39,6 +40,7 @@ for (const file of expectedScriptOrder) {
   assert.notEqual(index, -1, `index.html must load ${file}`);
   assert.ok(index > lastIndex, `${file} must be loaded after the previous script`);
   lastIndex = index;
+  assert.ok(pagesArtifactScript.includes(`'${file}'`), `Pages artifact must include ${file}`);
 }
 
 assert.ok(html.includes('<meta name="apple-mobile-web-app-title" content="今晚吃命" />'));
