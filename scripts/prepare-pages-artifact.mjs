@@ -25,6 +25,7 @@ const files = [
   'screens/Stats.jsx',
   'screens/Group.jsx',
   'screens/ImportSheet.jsx',
+  'screens/ManualPlaceSheet.jsx',
 ];
 
 rmSync(outDir, { recursive: true, force: true });

@@ -17,6 +17,7 @@ const requiredFiles = [
   'screens/Stats.jsx',
   'screens/Group.jsx',
   'screens/ImportSheet.jsx',
+  'screens/ManualPlaceSheet.jsx',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/icon-maskable-512.png',
