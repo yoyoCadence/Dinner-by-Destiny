@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 const outDir = 'dist';
 const files = [
   'index.html',
+  'version.json',
   'manifest.webmanifest',
   'sw.js',
   'data.js',
