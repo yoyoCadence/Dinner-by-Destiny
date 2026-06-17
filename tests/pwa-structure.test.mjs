@@ -145,6 +145,7 @@ const appShell = [...appShellBlock[1].matchAll(/'([^']+)'/g)].map((match) => mat
 assert.equal(new Set(appShell).size, appShell.length, 'APP_SHELL entries must be unique');
 for (const file of appShell) {
   assert.ok(existsSync(file), `APP_SHELL file must exist: ${file}`);
+  assert.ok(pagesArtifactScript.includes(`'${file}'`), `Pages artifact must include APP_SHELL file: ${file}`);
 }
 for (const file of expectedScriptOrder) {
   assert.ok(appShell.includes(file), `APP_SHELL must cache ${file}`);
