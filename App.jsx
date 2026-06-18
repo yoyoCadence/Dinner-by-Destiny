@@ -133,6 +133,10 @@ window.DinnerApp = function App() {
     const style = store.state.settings.diceStyle;
     return style === 'dice' ? '🎲' : style === 'slot' ? '🎰' : '🎴';
   };
+  const getDiceLabel = () => {
+    const style = store.state.settings.diceStyle;
+    return style === 'dice' ? '骰子' : style === 'slot' ? '拉霸' : '抽卡';
+  };
 
   const styleBtns = ['dice', 'slot', 'card'].map(function (v) {
     const on = store.state.settings.diceStyle === v;
@@ -232,7 +236,7 @@ window.DinnerApp = function App() {
     React.createElement('div', { style: { flex: 1, overflow: 'hidden' } }, mainScreen),
     React.createElement('div', { style: { flexShrink: 0, display: 'flex', padding: '8px 8px calc(8px + env(safe-area-inset-bottom, 0px))', background: 'var(--surface)', borderTop: '1px solid var(--line)' } },
       btn('explore', '探索', React.createElement(window.Icons.compass, { size: 23 })),
-      btn('dice', '骰子', null),
+      btn('dice', getDiceLabel(), null),
       btn('diary', '紀錄', React.createElement(window.Icons.book, { size: 23 })),
       btn('stats', '統計', React.createElement(window.Icons.chart, { size: 23 })),
       btn('settings', '設定', React.createElement(window.Icons.gear, { size: 23 }))
