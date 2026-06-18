@@ -21,16 +21,15 @@
     background: #18161f;
     background-image: radial-gradient(120% 90% at 50% 0%, #26222e 0%, #18161f 60%, #0f0e14 100%);
     font-family: 'Noto Sans TC', system-ui, sans-serif;
-    display: grid; place-items: center; overflow: hidden;
+    overflow: hidden;
   }
-  #stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  #stage { position: fixed; inset: 0; }
   #phone-wrap {
-    width: 390px; height: 844px; flex-shrink: 0;
-    border-radius: 54px; padding: 0; background: #000;
-    box-shadow: 0 0 0 12px #1b1b1f, 0 0 0 14px #2c2c30, 0 40px 90px -20px rgba(0,0,0,.7);
+    width: 100vw; height: 100dvh;
+    background: transparent;
     overflow: hidden; position: relative;
   }
-  #root { width: 100%; height: 100%; border-radius: 42px; overflow: hidden; }
+  #root { width: 100%; height: 100%; border-radius: 0; overflow: hidden; }
 
   input[type=range].radslider {
     -webkit-appearance: none; appearance: none; height: 6px; border-radius: 99px;
@@ -98,6 +97,9 @@
   <div id="phone-wrap"><div id="root"></div></div>
 </div>
 
+<script>
+  window.APP_VERSION = '2026.06.17.1';
+</script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
@@ -115,6 +117,7 @@
 <script type="text/babel" src="screens/Stats.jsx"></script>
 <script type="text/babel" src="screens/Group.jsx"></script>
 <script type="text/babel" src="screens/ImportSheet.jsx"></script>
+<script type="text/babel" src="screens/ManualPlaceSheet.jsx"></script>
 <script type="text/babel" src="App.jsx"></script>
 
 <script type="text/babel" data-presets="react">
@@ -124,20 +127,82 @@
     root.render(React.createElement(window.DinnerApp));
   }
   mount();
-
-  function fit() {
-    const wrap = document.getElementById('phone-wrap');
-    const pad = 24;
-    const s = Math.min((window.innerWidth - pad) / 390, (window.innerHeight - pad) / 844, 1);
-    wrap.style.transform = 'scale(' + s + ')';
-  }
-  window.addEventListener('resize', fit);
-  fit();
 </script>
 <script>
   if ('serviceWorker' in navigator) {
+    let refreshingForUpdate = false;
+    let pendingRegistration = null;
+
+    window.forcePWARefresh = async function () {
+      refreshingForUpdate = true;
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(function (registration) {
+          return registration.update().catch(function () {});
+        }));
+        await Promise.all(registrations.map(function (registration) {
+          if (registration.waiting) registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          return registration.unregister().catch(function () {});
+        }));
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.filter(function (key) { return /^dinner-by-destiny-v/.test(key); }).map(function (key) { return caches.delete(key); }));
+        }
+      } catch (e) {}
+      const url = new URL(window.location.href);
+      url.searchParams.set('app_refresh', Date.now().toString());
+      window.location.replace(url.toString());
+    };
+
+    function notifyAppUpdate(version) {
+      window.dispatchEvent(new CustomEvent('pwa-update-available', { detail: { version: version || null } }));
+    }
+
+    async function checkAppVersion() {
+      try {
+        const res = await fetch('version.json?ts=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return;
+        const info = await res.json();
+        if (info && info.version && info.version !== window.APP_VERSION) notifyAppUpdate(info.version);
+      } catch (e) {}
+    }
+
+    window.applyPWAUpdate = function () {
+      const waiting = pendingRegistration && pendingRegistration.waiting;
+      if (waiting) {
+        waiting.postMessage({ type: 'SKIP_WAITING' });
+        return;
+      }
+      window.location.reload();
+    };
+
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (refreshingForUpdate) return;
+      refreshingForUpdate = true;
+      window.location.reload();
+    });
+
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js').catch(function (e) {
+      navigator.serviceWorker.register('sw.js').then(function (registration) {
+        pendingRegistration = registration;
+        if (registration.waiting && navigator.serviceWorker.controller) notifyAppUpdate();
+        registration.addEventListener('updatefound', function () {
+          const worker = registration.installing;
+          if (!worker) return;
+          worker.addEventListener('statechange', function () {
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+              pendingRegistration = registration;
+              notifyAppUpdate();
+            }
+          });
+        });
+        registration.update().catch(function () {});
+        checkAppVersion();
+        setInterval(function () {
+          registration.update().catch(function () {});
+          checkAppVersion();
+        }, 60 * 60 * 1000);
+      }).catch(function (e) {
         console.log('SW 未註冊（多半是用 file:// 開啟，改用本機伺服器即可離線）', e && e.message);
       });
     });

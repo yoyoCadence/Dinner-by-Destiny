@@ -6,7 +6,7 @@
     var n = name || '';
     var rules = [
       // 麵食
-      [/(粄條|板條|米干|米線|餛飩|扁食|拉麵|烏龍麵|刀削|牛肉麵|麵店|拉麵|擔仔麵|陽春麵|麻醬麵|炸醬麵|意麵|油麵|湯麵|乾麵|涼麵|麵線|鍋燒|義大利麵|手工麵|麵食|麵館|麵$)/, 'noodle'],
+      [/(粄條|板條|米干|米線|餛飩|扁食|拉麵|烏龍麵|刀削|牛肉麵|麵店|擔仔麵|陽春麵|麻醬麵|炸醬麵|意麵|油麵|湯麵|乾麵|涼麵|麵線|鍋燒|義大利麵|手工麵|麵食|麵館|麵$)/, 'noodle'],
       // 雞鴨鵝
       [/(鴨肉|烤鴨|薑母鴨|鵝肉|雞肉飯|火雞|甕仔雞|甕缸雞|桶仔雞|燒臘|油雞|白斬雞|鹽水雞|雞家莊|土雞|放山雞)/, 'poultry'],
       // 火鍋
@@ -51,6 +51,15 @@
     if (hasSpendQuestion(p) || guessCuisine(n) !== 'unknown') return 'food'; // 強食物訊號
     if (SOFT_NON_FOOD.test(n)) return 'skip';                  // 景點且無食物訊號
     return 'maybe';                                            // 模稜兩可
+  }
+
+  function classifyReason(name, p) {
+    var n = name || '';
+    if (HARD_NON_FOOD.test(n)) return '命中停車、醫院、門市等硬排除字';
+    if (hasSpendQuestion(p)) return '有平均消費問卷';
+    if (guessCuisine(n) !== 'unknown') return '店名有料理關鍵字';
+    if (SOFT_NON_FOOD.test(n)) return '像景點或設施，且沒有餐飲訊號';
+    return '沒有足夠餐飲訊號';
   }
 
   // 清理店名：去掉「|說明」與結尾括號附註
@@ -102,6 +111,7 @@
     opts = opts || {};
     var feats = (json && json.features) || [];
     var seen = {};
+    var seenIdentity = {};
     var out = [];
     for (var i = 0; i < feats.length; i++) {
       var f = feats[i];
@@ -113,10 +123,15 @@
       if (coords[0] === 0 && coords[1] === 0) continue;
       var conf = classifyPlace(name, p);
       if (conf === 'skip' && !opts.includeNonFood) continue;
+      var reason = classifyReason(name, p);
       var disp = cleanName(name);
-      var id = idFromName(disp);
+      var identity = disp + '|' + (loc.address || coords.join(','));
+      if (seenIdentity[identity]) continue;
+      var baseId = idFromName(disp);
+      var id = seen[baseId] && seen[baseId] !== identity ? idFromName(identity) : baseId;
       if (seen[id]) continue;
-      seen[id] = 1;
+      seen[id] = identity;
+      seenIdentity[identity] = 1;
       var review = p.review_text_published || '';
       out.push({
         id: id, name: disp, cuisine: guessCuisine(disp), confidence: conf,
@@ -127,15 +142,49 @@
         eatCount: eatCountFromText(review),
         lastEaten: (p.date || '').slice(0, 10),
         dineIn: true, tags: [],
+        mapUrl: p.google_maps_url || '',
+        reviewText: review,
         blurb: review.split('\n')[0].slice(0, 40),
+        importReason: reason,
       });
     }
     return out;
   }
 
+  function mergeRestaurantLists(lists) {
+    var byId = {};
+    (lists || []).forEach(function (list) {
+      (list || []).forEach(function (r) {
+        if (!r || !r.id) return;
+        var old = byId[r.id];
+        if (!old) {
+          byId[r.id] = Object.assign({}, r);
+          return;
+        }
+        byId[r.id] = Object.assign({}, old, r, {
+          confidence: old.confidence === 'food' || r.confidence === 'food' ? 'food' : (old.confidence || r.confidence),
+          cuisine: old.cuisine && old.cuisine !== 'unknown' ? old.cuisine : r.cuisine,
+          price: Math.max(old.price || 0, r.price || 0) || 1,
+          rating: Math.max(old.rating || 0, r.rating || 0),
+          eatCount: Math.max(old.eatCount || 0, r.eatCount || 0),
+          lastEaten: [old.lastEaten, r.lastEaten].filter(Boolean).sort().pop() || '',
+          tags: Array.from(new Set([].concat(old.tags || [], r.tags || []))),
+          blurb: (old.blurb || '').length >= (r.blurb || '').length ? old.blurb : r.blurb,
+          reviewText: (old.reviewText || '').length >= (r.reviewText || '').length ? old.reviewText : r.reviewText,
+          mapUrl: old.mapUrl || r.mapUrl || '',
+          importReason: old.importReason || r.importReason || '',
+          excludedUntil: old.excludedUntil || r.excludedUntil || null,
+        });
+      });
+    });
+    return Object.keys(byId).map(function (id) { return byId[id]; });
+  }
+
   window.GMImport = {
     guessCuisine: guessCuisine, isFood: isFood, cleanName: cleanName, cityFromAddr: cityFromAddr,
     idFromName: idFromName, priceFromQuestions: priceFromQuestions, hasSpendQuestion: hasSpendQuestion,
-    classifyPlace: classifyPlace, eatCountFromText: eatCountFromText, parseGeoJSON: parseGeoJSON,
+    classifyPlace: classifyPlace, classifyReason: classifyReason,
+    eatCountFromText: eatCountFromText, parseGeoJSON: parseGeoJSON,
+    mergeRestaurantLists: mergeRestaurantLists,
   };
 })();

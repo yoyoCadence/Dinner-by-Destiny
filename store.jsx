@@ -2,6 +2,40 @@
 const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
 const STORE_KEY = 'dinner_by_destiny_v1';
+const ONBOARDING_VERSION = 4;
+window.ONBOARDING_VERSION = ONBOARDING_VERSION;
+
+function normalizeUserRestaurant(r) {
+  if (!r || !r.id || !r.name || typeof r.lat !== 'number' || typeof r.lng !== 'number') return null;
+  return {
+    cuisine: 'unknown',
+    price: 1,
+    rating: 0,
+    city: '其他',
+    addr: '',
+    eatCount: 0,
+    lastEaten: '',
+    dineIn: true,
+    tags: [],
+    blurb: '',
+    reviewText: '',
+    mapUrl: '',
+    importReason: '',
+    source: r.source || 'google',
+    excludedUntil: null,
+    ...r,
+    source: r.source || 'google',
+    excludedUntil: r.excludedUntil || null,
+  };
+}
+
+function latestDiaryDateFor(diary, restId) {
+  return diary
+    .filter((d) => d.restId === restId && d.date)
+    .map((d) => d.date)
+    .sort()
+    .pop() || '';
+}
 
 function loadStore() {
   try {
@@ -15,21 +49,31 @@ function loadStore() {
 function migrate(s) {
   if (!s || !s.restaurants) return s;
   // 補上後來新增的設定欄位
-  s.settings = Object.assign({ theme: 'warm', radius: 1200, noRadius: true, city: 'all', layout: 'card', diceStyle: 'dice' }, s.settings || {});
+  s.settings = Object.assign({ theme: 'warm', radius: 1200, noRadius: true, city: 'all', cuisine: 'all', layout: 'card', diceStyle: 'dice' }, s.settings || {});
+  s.removedRestaurantIds = Array.isArray(s.removedRestaurantIds) ? s.removedRestaurantIds.filter(Boolean) : [];
+  if (typeof s.onboardingVersionSeen !== 'number') s.onboardingVersionSeen = 0;
   const seedById = {};
   window.SEED_RESTAURANTS.forEach((r) => { seedById[r.id] = r; });
+  const removedSeedIds = new Set(s.removedRestaurantIds);
   const savedById = {};
   s.restaurants.forEach((r) => { savedById[r.id] = r; });
-  s.restaurants = window.SEED_RESTAURANTS.map((seed) => {
-    const old = savedById[seed.id] || {};
-    return {
-      ...seed,
-      eatCount: old.eatCount != null ? old.eatCount : seed.eatCount,
-      lastEaten: old.lastEaten || seed.lastEaten,
-      rating: old.rating != null ? old.rating : seed.rating,
-      excludedUntil: old.excludedUntil || null,
-    };
-  });
+  const migratedSeeds = window.SEED_RESTAURANTS
+    .filter((seed) => !removedSeedIds.has(seed.id))
+    .map((seed) => {
+      const old = savedById[seed.id] || {};
+      return {
+        ...seed,
+        eatCount: old.eatCount != null ? old.eatCount : seed.eatCount,
+        lastEaten: old.lastEaten || seed.lastEaten,
+        rating: old.rating != null ? old.rating : seed.rating,
+        excludedUntil: old.excludedUntil || null,
+      };
+    });
+  const imported = s.restaurants
+    .filter((r) => !seedById[r.id])
+    .map(normalizeUserRestaurant)
+    .filter(Boolean);
+  s.restaurants = migratedSeeds.concat(imported);
   return s;
 }
 
@@ -44,6 +88,7 @@ function defaultState() {
       radius: 1200, // 公尺
       noRadius: true, // 不限距離：true 時忽略半徑，顯示全部餐廳
       city: 'all', // all | 台北 | 新北 | ...
+      cuisine: 'all', // all | cuisine key
       layout: 'card', // card | compact | magazine
       diceStyle: 'dice', // dice | slot | card
     },
@@ -52,7 +97,9 @@ function defaultState() {
       { id: 'f2', name: '阿傑', emoji: '🐻' },
       { id: 'f3', name: '宥宥', emoji: '🐰' },
     ],
-    onboarded: true,
+    removedRestaurantIds: [],
+    onboarded: false,
+    onboardingVersionSeen: 0,
   };
 }
 
@@ -106,10 +153,22 @@ function useStore() {
 
   // 編輯一筆日記（日期、金額、心情、備註…）
   const updateDiary = useCallback((id, patch) => {
-    setState((s) => ({
-      ...s,
-      diary: s.diary.map((d) => (d.id === id ? Object.assign({}, d, patch) : d)),
-    }));
+    setState((s) => {
+      const old = s.diary.find((d) => d.id === id);
+      const diary = s.diary.map((d) => (d.id === id ? Object.assign({}, d, patch) : d));
+      let restaurants = s.restaurants;
+      if (old && old.restId && patch.date && patch.date !== old.date) {
+        restaurants = s.restaurants.map((r) => {
+          if (r.id !== old.restId) return r;
+          const latest = latestDiaryDateFor(diary, old.restId);
+          if (r.lastEaten === old.date || patch.date > (r.lastEaten || '')) {
+            return { ...r, lastEaten: latest || patch.date };
+          }
+          return r;
+        });
+      }
+      return { ...s, diary, restaurants };
+    });
   }, []);
 
   // 修改餐廳分類（待分類 → 指定類別，匯入後可改）
@@ -122,7 +181,7 @@ function useStore() {
 
   // 最近吃膩了：排除 N 天
   const snooze = useCallback((restId, days) => {
-    const until = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+    const until = window.dateStr(new Date(Date.now() + days * 86400000));
     setState((s) => ({
       ...s,
       restaurants: s.restaurants.map((r) => (r.id === restId ? { ...r, excludedUntil: until } : r)),
@@ -144,22 +203,67 @@ function useStore() {
 
   const resetAll = useCallback(() => setState(defaultState()), []);
 
+  const addManualRestaurant = useCallback((entry) => {
+    const now = Date.now();
+    const normalized = normalizeUserRestaurant({
+      id: 'manual-' + now.toString(36),
+      cuisine: 'unknown',
+      price: 1,
+      rating: 0,
+      city: '其他',
+      addr: '',
+      lat: 0,
+      lng: 0,
+      eatCount: 0,
+      lastEaten: '',
+      dineIn: true,
+      tags: ['手動新增'],
+      blurb: '',
+      reviewText: '',
+      mapUrl: '',
+      importReason: '使用者手動新增',
+      source: 'manual',
+      createdAt: new Date(now).toISOString(),
+      ...entry,
+    });
+    if (!normalized) return false;
+    setState((s) => {
+      const ids = new Set(s.restaurants.map((r) => r.id));
+      var item = normalized;
+      var i = 2;
+      while (ids.has(item.id)) {
+        item = Object.assign({}, normalized, { id: normalized.id + '-' + i });
+        i += 1;
+      }
+      return { ...s, restaurants: [item, ...s.restaurants] };
+    });
+    return true;
+  }, []);
+
+  const completeOnboarding = useCallback(() => {
+    setState((s) => ({ ...s, onboarded: true, onboardingVersionSeen: ONBOARDING_VERSION }));
+  }, []);
+
   // 套用 Google Maps 匯入差異：新增 addList、刪除 removeIds
   const applyImport = useCallback((addList, removeIds) => {
     setState((s) => {
       const removeSet = new Set(removeIds || []);
-      const restaurants = s.restaurants.filter((r) => !removeSet.has(r.id));
+      const restaurants = s.restaurants.filter((r) => r.source === 'manual' || !removeSet.has(r.id));
       const existing = new Set(restaurants.map((r) => r.id));
+      const seedIds = new Set(window.SEED_RESTAURANTS.map((r) => r.id));
+      const addIds = new Set((addList || []).map((r) => r && r.id).filter(Boolean));
+      const removedRestaurantIds = Array.from(new Set([...(s.removedRestaurantIds || []), ...(removeIds || []).filter((id) => seedIds.has(id))]))
+        .filter((id) => !addIds.has(id));
       (addList || []).forEach((r) => {
-        if (!existing.has(r.id)) restaurants.push(Object.assign({ excludedUntil: null }, r));
+        if (!existing.has(r.id)) restaurants.push(Object.assign({ excludedUntil: null, source: 'google' }, r));
       });
-      return { ...s, restaurants };
+      return { ...s, restaurants, removedRestaurantIds };
     });
   }, []);
 
   return {
     state, setState,
-    setSetting, logMeal, deleteDiary, updateDiary, setCuisine, snooze, unsnooze, setRating, resetAll, applyImport,
+    setSetting, logMeal, deleteDiary, updateDiary, setCuisine, snooze, unsnooze, setRating, resetAll, addManualRestaurant, applyImport, completeOnboarding,
   };
 }
 

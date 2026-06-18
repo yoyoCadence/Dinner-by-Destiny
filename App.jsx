@@ -1,6 +1,67 @@
 const { Sheet } = window;
 const { useState, useEffect, useRef } = React;
 
+function TakeoutLink() {
+  return React.createElement('a', { href: 'https://takeout.google.com', target: '_blank', rel: 'noopener noreferrer', style: { color: 'var(--accent)', fontWeight: 900, textDecoration: 'underline' } }, 'takeout.google.com');
+}
+
+function OnboardingSheet({ onStart, onImport, onClose }) {
+  const stepStyle = { display: 'flex', gap: 12, padding: '13px 14px', borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--line)' };
+  const badgeStyle = { width: 28, height: 28, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0, background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 13, fontWeight: 900 };
+  const titleStyle = { margin: '0 0 4px', fontSize: 14.5, fontWeight: 850, color: 'var(--ink)' };
+  const textStyle = { margin: 0, fontSize: 12.8, color: 'var(--ink-soft)', lineHeight: 1.6 };
+  const steps = [
+    { n: '1', title: '先挑今天的範圍', text: '到「探索」點城市、距離或料理，候選清單會跟著縮小。' },
+    { n: '2', title: '讓骰子抽三家', text: '骰子會直接套用探索範圍，抽出三家讓你挑。' },
+    { n: '3', title: '換成你的常去清單', text: '之後可匯入 Google Maps 儲存、評論過的餐廳；可直接用 Takeout .zip。' },
+  ];
+  return React.createElement('div', { style: { padding: '4px 18px 22px', display: 'flex', flexDirection: 'column', gap: 14 } },
+    React.createElement('div', { style: { padding: '18px 16px', borderRadius: 18, background: 'var(--accent-soft)', border: '1.5px solid var(--accent)' } },
+      React.createElement('div', { style: { fontSize: 30, marginBottom: 8 } }, '🍽️'),
+      React.createElement('h2', { style: { margin: '0 0 7px', fontSize: 21, fontWeight: 900, color: 'var(--ink)', fontFamily: 'var(--font-display)' } }, '今晚吃哪間？先讓命運幫你縮小選擇'),
+      React.createElement('p', { style: { margin: 0, fontSize: 13.2, lineHeight: 1.65, color: 'var(--ink)' } }, '從一份餐廳清單開始，先選今天的範圍，再用骰子、拉霸或抽卡挑出幾個候選。')
+    ),
+    React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 9 } },
+      steps.map(function (s) {
+        return React.createElement('div', { key: s.n, style: stepStyle },
+          React.createElement('div', { style: badgeStyle }, s.n),
+          React.createElement('div', null,
+            React.createElement('p', { style: titleStyle }, s.title),
+            React.createElement('p', { style: textStyle }, s.text)
+          )
+        );
+      })
+    ),
+    React.createElement('div', { style: { padding: '13px 14px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--line)' } },
+      React.createElement('p', { style: titleStyle }, 'Google Maps 匯出在哪裡？'),
+      React.createElement('p', { style: textStyle }, '想放進自己的餐廳時，打開 ', React.createElement(TakeoutLink), ' → 建立新匯出 → 取消全選 → 只勾「地圖（你的地點）」，不要勾上方的「地圖」。')
+    ),
+    React.createElement('div', { style: { display: 'flex', gap: 10, paddingTop: 2 } },
+      React.createElement('button', { onClick: onClose, style: { flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 800, cursor: 'pointer' } }, '先逛逛'),
+      React.createElement('button', { onClick: onStart, style: { flex: 1.4, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '開始選今晚吃什麼')
+    )
+  );
+}
+
+function ImportPromptSheet({ onImport, onClose }) {
+  const textStyle = { margin: 0, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.7 };
+  return React.createElement('div', { style: { padding: '4px 18px 22px', display: 'flex', flexDirection: 'column', gap: 14 } },
+    React.createElement('div', { style: { padding: '18px 16px', borderRadius: 18, background: 'var(--accent-soft)', border: '1.5px solid var(--accent)' } },
+      React.createElement('div', { style: { fontSize: 30, marginBottom: 8 } }, '🎉'),
+      React.createElement('h2', { style: { margin: '0 0 7px', fontSize: 21, fontWeight: 900, color: 'var(--ink)', fontFamily: 'var(--font-display)' } }, '玩法就是這樣'),
+      React.createElement('p', { style: { margin: 0, fontSize: 13.2, lineHeight: 1.65, color: 'var(--ink)' } }, '接下來可以把候選餐廳換成你自己的 Google Maps 清單，之後每次打開都從熟悉的店裡挑。')
+    ),
+    React.createElement('div', { style: { padding: '13px 14px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--line)' } },
+      React.createElement('p', { style: { margin: '0 0 4px', fontSize: 14.5, fontWeight: 850, color: 'var(--ink)' } }, '匯出資料'),
+      React.createElement('p', { style: textStyle }, '打開 ', React.createElement(TakeoutLink), ' → 建立新匯出 → 取消全選 → 只勾「地圖（你的地點）」→ 下一步 → 建立匯出。下載後可直接匯入 .zip，也可以解壓縮後匯入「評論.json」和「已儲存的地點.json」。')
+    ),
+    React.createElement('div', { style: { display: 'flex', gap: 10, paddingTop: 2 } },
+      React.createElement('button', { onClick: onClose, style: { flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 800, cursor: 'pointer' } }, '先繼續逛'),
+      React.createElement('button', { onClick: onImport, style: { flex: 1.3, padding: '14px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '匯入我的餐廳')
+    )
+  );
+}
+
 window.DinnerApp = function App() {
   const store = window.useStore();
   const [tab, setTab] = useState('dice');
@@ -9,7 +70,12 @@ window.DinnerApp = function App() {
   const [logPreset, setLogPreset] = useState(null);
   const [groupOpen, setGroupOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const [editEntry, setEditEntry] = useState(null);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [guideStep, setGuideStep] = useState(null); // explore | dice | import
+  const [updateReady, setUpdateReady] = useState(null);
+  const [refreshingApp, setRefreshingApp] = useState(false);
   const [toast, setToast] = useState(null);
   const screenRef = useRef(null);
 
@@ -18,6 +84,11 @@ window.DinnerApp = function App() {
 
   const openDetail = r => setDetail(r);
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(null), 2200); };
+  useEffect(() => {
+    const onUpdateReady = (event) => setUpdateReady({ version: event.detail && event.detail.version });
+    window.addEventListener('pwa-update-available', onUpdateReady);
+    return () => window.removeEventListener('pwa-update-available', onUpdateReady);
+  }, []);
   const pickToEat = item => {
     const r = item.r || item;
     setDetail(null); setGroupOpen(false);
@@ -25,6 +96,37 @@ window.DinnerApp = function App() {
     showToast('祝用餐愉快 🍽️ 順手記錄一下吧');
   };
   const openLog = r => { setDetail(null); setLogPreset(r || null); setLogOpen(true); };
+  const needsOnboarding = (store.state.onboardingVersionSeen || 0) < (window.ONBOARDING_VERSION || 1);
+  const closeOnboarding = () => { setOnboardingOpen(false); store.completeOnboarding(); };
+  const startGuidedTry = () => { setOnboardingOpen(false); store.completeOnboarding(); setGuideStep('explore'); setTab('explore'); };
+  const importFromOnboarding = () => { closeOnboarding(); setGuideStep(null); setTab('settings'); setImportOpen(true); };
+  const closeImportPrompt = () => { setGuideStep(null); };
+  const applyAppUpdate = () => {
+    setUpdateReady(null);
+    if (window.applyPWAUpdate) window.applyPWAUpdate();
+    else window.location.reload();
+  };
+  const forceRefreshApp = () => {
+    setRefreshingApp(true);
+    showToast('正在更新 App，資料會保留');
+    if (window.forcePWARefresh) window.forcePWARefresh();
+    else window.location.reload();
+  };
+  const resetAppForFirstRun = () => {
+    if (!window.confirm('重設後會清除這台裝置目前匯入的餐廳、用餐紀錄與設定，回到第一次使用狀態。確定要重設嗎？')) return;
+    store.resetAll();
+    setDetail(null);
+    setLogOpen(false);
+    setLogPreset(null);
+    setGroupOpen(false);
+    setImportOpen(false);
+    setManualOpen(false);
+    setEditEntry(null);
+    setOnboardingOpen(false);
+    setGuideStep(null);
+    setTab('dice');
+    showToast('已重設為第一次使用狀態');
+  };
 
   const getDiceIcon = () => {
     const style = store.state.settings.diceStyle;
@@ -42,8 +144,8 @@ window.DinnerApp = function App() {
   });
 
   let mainScreen = null;
-  if (tab === 'explore') mainScreen = React.createElement(window.Explore, { store, onOpen: openDetail });
-  else if (tab === 'dice') mainScreen = React.createElement(window.Dice, { store, onPick: pickToEat, onGroup: () => setGroupOpen(true) });
+  if (tab === 'explore') mainScreen = React.createElement(window.Explore, { store, onOpen: openDetail, guideActive: guideStep === 'explore', onGuideNext: () => { setGuideStep('dice'); setTab('dice'); }, onGuideSkip: () => setGuideStep(null) });
+  else if (tab === 'dice') mainScreen = React.createElement(window.Dice, { store, onPick: pickToEat, onGroup: () => setGroupOpen(true), guideActive: guideStep === 'dice', onGuideDone: () => setGuideStep('import'), onGuideSkip: () => setGuideStep(null) });
   else if (tab === 'diary') mainScreen = React.createElement(window.Diary, { store, onAdd: () => openLog(null), onEdit: (d) => setEditEntry(d) });
   else if (tab === 'stats') mainScreen = React.createElement(window.Stats, { store });
   else if (tab === 'settings') mainScreen = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' } },
@@ -63,11 +165,52 @@ window.DinnerApp = function App() {
       ),
       React.createElement('div', { style: { marginBottom: 24 } },
         React.createElement('h3', { style: { margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: 'var(--ink)' } }, '餐廳資料'),
+        React.createElement('button', { onClick: () => setManualOpen(true), style: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer', marginBottom: 8 } },
+          React.createElement('span', { style: { fontSize: 24 } }, '➕'),
+          React.createElement('div', { style: { flex: 1 } },
+            React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, '自行新增餐廳'),
+            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '只填店名也能新增，可貼 Google Maps 連結')
+          ),
+          React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
+        ),
         React.createElement('button', { onClick: () => setImportOpen(true), style: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' } },
           React.createElement('span', { style: { fontSize: 24 } }, '🗺️'),
           React.createElement('div', { style: { flex: 1 } },
             React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, '匯入 Google Maps 餐廳'),
             React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '目前 ' + store.state.restaurants.length + ' 家 · 再次匯入會比對差異')
+          ),
+          React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
+        )
+      ),
+      React.createElement('div', { style: { marginBottom: 24 } },
+        React.createElement('h3', { style: { margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: 'var(--ink)' } }, '使用說明'),
+        React.createElement('button', { onClick: () => setOnboardingOpen(true), style: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' } },
+          React.createElement('span', { style: { fontSize: 24 } }, '❔'),
+          React.createElement('div', { style: { flex: 1 } },
+            React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, '重看第一次使用說明'),
+            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '快速導覽、分頁流程與 Google Maps 匯出步驟')
+          ),
+          React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
+        )
+      ),
+      React.createElement('div', { style: { marginBottom: 24 } },
+        React.createElement('h3', { style: { margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: 'var(--ink)' } }, 'App 更新'),
+        React.createElement('button', { onClick: forceRefreshApp, disabled: refreshingApp, style: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '14px', borderRadius: 12, border: '1.5px solid var(--line)', background: refreshingApp ? 'var(--surface-2)' : 'var(--surface)', color: 'var(--ink)', cursor: refreshingApp ? 'wait' : 'pointer', opacity: refreshingApp ? 0.78 : 1 } },
+          React.createElement('span', { style: { fontSize: 24 } }, '↻'),
+          React.createElement('div', { style: { flex: 1 } },
+            React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, refreshingApp ? '正在更新最新版本' : '手動更新最新版本'),
+            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '只更新 App 資源，不會清除已匯入餐廳與紀錄')
+          ),
+          React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
+        )
+      ),
+      React.createElement('div', { style: { marginBottom: 24 } },
+        React.createElement('h3', { style: { margin: '0 0 12px', fontSize: 14, fontWeight: 800, color: 'var(--ink)' } }, '開發者模式'),
+        React.createElement('button', { onClick: resetAppForFirstRun, style: { width: '100%', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', padding: '14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', cursor: 'pointer' } },
+          React.createElement('span', { style: { fontSize: 24 } }, '🧪'),
+          React.createElement('div', { style: { flex: 1 } },
+            React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, '重設 App'),
+            React.createElement('div', { style: { fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 } }, '清除本機匯入資料與紀錄，回到第一次使用視角')
           ),
           React.createElement('span', { style: { color: 'var(--ink-faint)', fontSize: 18 } }, '›')
         )
@@ -84,8 +227,7 @@ window.DinnerApp = function App() {
     React.createElement('span', { style: { fontSize: 10.5, fontWeight: tab === key ? 800 : 600 } }, label)
   );
 
-  return React.createElement('div', { ref: screenRef, style: { width: 390, height: 844, background: 'var(--bg)', overflow: 'hidden', display: 'flex', flexDirection: 'column' } },
-    React.createElement('div', { style: { height: 44, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 26px', flexShrink: 0 } }, React.createElement('span', { style: { fontSize: 15, fontWeight: 800, color: 'var(--chrome)', fontFamily: 'var(--font-display)' } }, '18:30')),
+  return React.createElement('div', { ref: screenRef, style: { width: '100%', height: '100%', background: 'var(--bg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' } },
     React.createElement('div', { style: { flex: 1, overflow: 'hidden' } }, mainScreen),
     React.createElement('div', { style: { flexShrink: 0, display: 'flex', padding: '8px 8px 0', background: 'var(--surface)', borderTop: '1px solid var(--line)' } },
       btn('explore', '探索', React.createElement(window.Icons.compass, { size: 23 })),
@@ -94,7 +236,6 @@ window.DinnerApp = function App() {
       btn('stats', '統計', React.createElement(window.Icons.chart, { size: 23 })),
       btn('settings', '設定', React.createElement(window.Icons.gear, { size: 23 }))
     ),
-    React.createElement('div', { style: { height: 8, flexShrink: 0, background: 'var(--surface)', display: 'grid', placeItems: 'center', paddingBottom: 6 } }, React.createElement('div', { style: { width: 134, height: 5, borderRadius: 5, background: 'var(--chrome)', opacity: .35 } })),
     React.createElement(Sheet, { open: !!detail, onClose: () => setDetail(null) }, detail && React.createElement('div', { style: { padding: '4px 20px 26px' } },
       React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 } },
         React.createElement('span', { style: { fontSize: 48 } }, window.cuisineOf(detail.cuisine).emoji),
@@ -132,7 +273,18 @@ window.DinnerApp = function App() {
     React.createElement(Sheet, { open: logOpen, onClose: () => setLogOpen(false), title: '記錄這一餐', full: true }, React.createElement(window.LogSheet, { store, preset: logPreset, onClose: () => { setLogOpen(false); showToast('已記錄 ✅'); } })),
     React.createElement(Sheet, { open: groupOpen, onClose: () => setGroupOpen(false), title: '和朋友一起骰', full: true }, React.createElement(window.Group, { store, onClose: () => setGroupOpen(false), onPick: pickToEat })),
     React.createElement(Sheet, { open: importOpen, onClose: () => setImportOpen(false), title: '匯入餐廳資料', full: true }, React.createElement(window.ImportSheet, { store, onClose: () => { setImportOpen(false); showToast('餐廳清單已更新 ✅'); } })),
+    React.createElement(Sheet, { open: manualOpen, onClose: () => setManualOpen(false), title: '自行新增餐廳', full: true }, React.createElement(window.ManualPlaceSheet, { store, onClose: () => { setManualOpen(false); showToast('已新增餐廳 ✅'); } })),
+    React.createElement(Sheet, { open: guideStep === 'import', onClose: closeImportPrompt, title: '換成你的餐廳', full: true }, React.createElement(ImportPromptSheet, { onImport: importFromOnboarding, onClose: closeImportPrompt })),
+    React.createElement(Sheet, { open: needsOnboarding || onboardingOpen, onClose: closeOnboarding, title: '第一次使用說明', full: true }, React.createElement(OnboardingSheet, { onStart: startGuidedTry, onImport: importFromOnboarding, onClose: closeOnboarding })),
     React.createElement(Sheet, { open: !!editEntry, onClose: () => setEditEntry(null), title: '編輯這一餐', full: true }, editEntry && React.createElement(window.DiaryEditSheet, { store, entry: editEntry, onClose: () => setEditEntry(null) })),
+    updateReady && React.createElement('div', { style: { position: 'absolute', left: 14, right: 14, bottom: 82, zIndex: 90, padding: '13px 14px', borderRadius: 16, background: 'var(--surface)', border: '1.5px solid var(--accent)', boxShadow: 'var(--shadow)', display: 'flex', alignItems: 'center', gap: 12 } },
+      React.createElement('div', { style: { flex: 1, minWidth: 0 } },
+        React.createElement('div', { style: { fontSize: 14, fontWeight: 900, color: 'var(--ink)', marginBottom: 3 } }, '有新版可以更新'),
+        React.createElement('div', { style: { fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.45 } }, '更新只會重新載入 App，已匯入餐廳和紀錄會保留在這台裝置。')
+      ),
+      React.createElement('button', { onClick: () => setUpdateReady(null), style: { flexShrink: 0, padding: '10px 11px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface-2)', color: 'var(--ink)', fontSize: 12, fontWeight: 800, cursor: 'pointer' } }, '稍後'),
+      React.createElement('button', { onClick: applyAppUpdate, style: { flexShrink: 0, padding: '10px 12px', borderRadius: 12, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 12, fontWeight: 900, cursor: 'pointer' } }, '立即更新')
+    ),
     toast && React.createElement('div', { style: { position: 'absolute', bottom: 96, left: '50%', transform: 'translateX(-50%)', background: 'var(--chrome)', color: 'var(--bg)', padding: '11px 18px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, whiteSpace: 'nowrap', zIndex: 80, boxShadow: '0 8px 24px rgba(0,0,0,.3)' } }, toast)
   );
 };

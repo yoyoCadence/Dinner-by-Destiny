@@ -2,9 +2,9 @@
 const { Icons } = window;
 const { useState, useEffect, useRef } = React;
 
-function pickThreeG(restaurants, radius) {
+function pickThreeG(restaurants, radius, noRadius) {
   const pool = restaurants.map((r) => ({ r, dist: window.distM(window.HOME_LOC, r) }))
-    .filter(({ r, dist }) => dist <= radius && !window.isSnoozed(r));
+    .filter(({ r, dist }) => (noRadius || dist <= radius) && !window.isSnoozed(r));
   const a = pool.slice();
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a.slice(0, Math.min(3, a.length));
@@ -16,7 +16,7 @@ const btnS = { flex: 1, padding: '14px', borderRadius: 14, border: '1.5px solid 
 
 function Group({ store, onClose, onPick }) {
   const { state } = store;
-  const { radius } = state.settings;
+  const { radius, noRadius } = state.settings;
   const [stage, setStage] = useState('lobby');
   const [joined, setJoined] = useState(state.friends.map((f) => f.id));
   const [cands, setCands] = useState([]);
@@ -27,7 +27,7 @@ function Group({ store, onClose, onPick }) {
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   const start = () => {
-    const c = pickThreeG(state.restaurants, radius);
+    const c = pickThreeG(state.restaurants, radius, noRadius);
     if (c.length < 2) { alert('此範圍可選餐廳太少，先到探索頁拉大範圍'); return; }
     setCands(c); setVotes({}); setStage('vote');
     state.friends.filter((f) => joined.includes(f.id)).forEach((f, i) => {
@@ -55,8 +55,11 @@ function Group({ store, onClose, onPick }) {
   const winner = winners.length ? cands[winners[Math.floor(Math.random() * winners.length)]] : null;
 
   const lobbyContent = React.createElement('div', null,
+    React.createElement('p', { style: { fontSize: 14, color: 'var(--ink-soft)', lineHeight: 1.6, margin: '0 0 10px' } },
+      '目前沒有後端，所以這裡是同一支手機上的派對投票／模擬投票。真正讓好友各自打開連結投票，需要之後加同步房間。'
+    ),
     React.createElement('p', { style: { fontSize: 14, color: 'var(--ink-soft)', lineHeight: 1.6, margin: '0 0 16px' } },
-      '選好要一起的朋友，骰出 3 家候選，大家各投一票，最高票出線！平手就由骰子決定。'
+      '選好要一起的朋友，骰出 3 家候選，大家各投一票，最高票出線；平手就由骰子決定。'
     ),
     React.createElement('p', { style: secT }, '誰要一起？'),
     React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 18 } },
@@ -120,7 +123,7 @@ function Group({ store, onClose, onPick }) {
       })
     ),
     stage === 'vote' && myVote == null && React.createElement('p', { style: { textAlign: 'center', fontSize: 13.5, color: 'var(--accent)', fontWeight: 700, marginTop: 14 } }, '👆 換你投票！'),
-    stage === 'vote' && myVote != null && !allVoted && React.createElement('p', { style: { textAlign: 'center', fontSize: 13, color: 'var(--ink-soft)', marginTop: 14 } }, '等朋友投票中…'),
+    stage === 'vote' && myVote != null && !allVoted && React.createElement('p', { style: { textAlign: 'center', fontSize: 13, color: 'var(--ink-soft)', marginTop: 14 } }, '本機模擬朋友投票中…'),
     stage === 'done' && winner && React.createElement('div', { style: { marginTop: 16, textAlign: 'center' } },
       React.createElement('p', { style: { fontSize: 15, fontWeight: 800, color: 'var(--ink)', margin: '0 0 12px' } }, '🎉 出線的是「' + winner.r.name + '」！'),
       React.createElement('div', { style: { display: 'flex', gap: 9 } },
@@ -136,3 +139,4 @@ function Group({ store, onClose, onPick }) {
 }
 
 window.Group = Group;
+window.pickThreeG = pickThreeG;

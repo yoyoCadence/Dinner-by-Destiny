@@ -29,18 +29,19 @@ function RevealFade({ children }) {
 }
 
 // 三選一結果視圖 — 骰子 / 拉霸 / 抽卡 共用
-function ThreePick({ cards, onPick, onAgain, title, againLabel }) {
+function ThreePick({ cards, onPick, onAgain, title, againLabel, guideActive, onGuideDone }) {
   return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 18, padding: 16 } },
     React.createElement('h2', { style: { margin: 0, fontSize: 19, fontWeight: 800, color: 'var(--ink)', textAlign: 'center' } }, title),
     React.createElement('div', { style: { display: 'flex', gap: 10, width: '100%', alignItems: 'stretch' } },
       cards.map(function (c, i) { return React.createElement(CardFace, { key: c.r.id, item: c, onPick: onPick, delay: i * 90 }); })
     ),
+    guideActive && React.createElement('button', { onClick: onGuideDone, style: { width: '100%', padding: '13px 16px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '換成我的 Google Maps 餐廳'),
     React.createElement('button', { onClick: onAgain, style: { padding: '12px 22px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 700, cursor: 'pointer' } }, againLabel)
   );
 }
 
 // 骰子模式 — 真正的 3D 立方體滾動，停下淡出骰子、淡入中選餐廳
-function DiceMode({ cands, deal, onResult }) {
+function DiceMode({ cands, deal, onResult, guideActive, onGuideDone, autoStart }) {
   const [phase, setPhase] = useState('idle'); // idle | rolling | fading | reveal
   const [picks, setPicks] = useState(null);
   const faces = useMemo(function () {
@@ -63,9 +64,13 @@ function DiceMode({ cands, deal, onResult }) {
     }, 1300);
   };
 
+  useEffect(function () {
+    if (autoStart && phase === 'idle') roll();
+  }, []);
+
   if (phase === 'reveal' && picks) {
     return React.createElement(RevealFade, null,
-      React.createElement(ThreePick, { cards: picks, onPick: onResult, onAgain: roll, title: '🎉 骰出三家，挑一家', againLabel: '🎲 再骰一次' })
+      React.createElement(ThreePick, { cards: picks, onPick: onResult, onAgain: roll, title: '🎉 骰出三家，挑一家', againLabel: '🎲 再骰一次', guideActive: guideActive, onGuideDone: onGuideDone })
     );
   }
 
@@ -88,7 +93,7 @@ var SLOT_FILLER = ['🍜','🍣','🍕','🍔','🍱','🍛','🥘','🍲','🌮
 
 function emojiOf(c) { return window.cuisineOf(c.r.cuisine).emoji || '🍽️'; }
 
-function SlotMode({ cands, deal, onResult }) {
+function SlotMode({ cands, deal, onResult, guideActive, onGuideDone, autoStart }) {
   const [phase, setPhase] = useState('idle');   // idle | spinning | done
   const [picks, setPicks] = useState(null);
   const [strips, setStrips] = useState(function () {
@@ -140,8 +145,12 @@ function SlotMode({ cands, deal, onResult }) {
     }, 2250);
   };
 
+  useEffect(function () {
+    if (autoStart && phase === 'idle') pull();
+  }, []);
+
   if (picks) {
-    return React.createElement(ThreePick, { cards: picks, onPick: onResult, onAgain: pull, title: '🎰 轉出三家，挑一家', againLabel: '🎰 再拉一次' });
+    return React.createElement(ThreePick, { cards: picks, onPick: onResult, onAgain: pull, title: '🎰 轉出三家，挑一家', againLabel: '🎰 再拉一次', guideActive: guideActive, onGuideDone: onGuideDone });
   }
 
   var durations = ['1.3s', '1.65s', '2.0s'];
@@ -250,7 +259,7 @@ function FlipCard({ item, flipped, selectable, onPick, dealDelay, flipDelay }) {
   );
 }
 
-function CardMode({ deal, onResult }) {
+function CardMode({ deal, onResult, guideActive, onGuideDone, autoStart }) {
   const [cards, setCards] = useState(null);
   const [flipped, setFlipped] = useState(false);
   const [round, setRound] = useState(0);
@@ -262,6 +271,10 @@ function CardMode({ deal, onResult }) {
     setRound(function (n) { return n + 1; });
     setTimeout(function () { setFlipped(true); }, 720);
   };
+
+  useEffect(function () {
+    if (autoStart && !cards) doDeal();
+  }, []);
 
   if (!cards || cards.length === 0) {
     return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 22, padding: 20 } },
@@ -283,35 +296,39 @@ function CardMode({ deal, onResult }) {
       cards[1] && React.createElement(FlipCard, { key: '1', item: cards[1], flipped: flipped, selectable: flipped, onPick: onResult, dealDelay: 130, flipDelay: 360 }),
       cards[2] && React.createElement(FlipCard, { key: '2', item: cards[2], flipped: flipped, selectable: flipped, onPick: onResult, dealDelay: 260, flipDelay: 600 })
     ),
+    guideActive && flipped && React.createElement('button', { onClick: onGuideDone, style: { width: '100%', padding: '13px 16px', borderRadius: 14, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 14, fontWeight: 900, cursor: 'pointer' } }, '換成我的 Google Maps 餐廳'),
     React.createElement('button', { onClick: doDeal, style: { padding: '12px 22px', borderRadius: 14, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: flipped ? 1 : 0.4, pointerEvents: flipped ? 'auto' : 'none', transition: 'opacity .3s' } }, '🔀 重新發牌')
   );
 }
 
 // 主 Dice 頁面
-function Dice({ store, onPick, onGroup }) {
+function Dice({ store, onPick, onGroup, guideActive, onGuideDone, onGuideSkip }) {
   const [stage, setStage] = useState('menu');
-  const { diceStyle, city, noRadius, radius } = store.state.settings;
+  const [showScopeHelp, setShowScopeHelp] = useState(false);
+  const { diceStyle, city, cuisine, noRadius, radius } = store.state.settings;
 
   const pool = useMemo(function () {
     return store.state.restaurants
       .map(function (r) { return { r: r, dist: window.distM(window.HOME_LOC, r) }; })
-      .filter(function (x) { return (noRadius || x.dist <= radius) && (city === 'all' || x.r.city === city) && !window.isSnoozed(x.r); });
-  }, [store.state.restaurants, city, noRadius, radius]);
+      .filter(function (x) {
+        return (noRadius || x.dist <= radius)
+          && (city === 'all' || x.r.city === city)
+          && (cuisine === 'all' || x.r.cuisine === cuisine)
+          && !window.isSnoozed(x.r);
+      });
+  }, [store.state.restaurants, city, cuisine, noRadius, radius]);
 
   const shuffle = function (arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const deal = function (n) { return shuffle(pool).slice(0, n); };
 
   const handleResult = function (item) { onPick(item); setStage('menu'); };
   const cityLabel = city === 'all' ? '全部城市' : city;
+  const cuisineLabel = cuisine === 'all' ? '全部料理' : window.cuisineOf(cuisine).label;
+  const scopeLabel = cityLabel + ' · ' + cuisineLabel + (noRadius ? ' · 不限距離' : ' · ' + (radius / 1000).toFixed(1) + ' km 內');
 
   const header = React.createElement('div', { style: { padding: '12px 18px', flexShrink: 0, borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 } },
     React.createElement('h1', { style: { margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--ink)', whiteSpace: 'nowrap' } }, diceStyle === 'dice' ? '🎲 骰子' : diceStyle === 'slot' ? '🎰 拉霸' : '🎴 抽卡'),
-    React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-      React.createElement('select', { value: city, onChange: function (e) { store.setSetting('city', e.target.value); setStage('menu'); }, style: { fontSize: 13, fontWeight: 700, color: 'var(--ink)', background: 'var(--surface)', border: '1.5px solid var(--line)', borderRadius: 999, padding: '6px 10px', fontFamily: 'var(--font)', cursor: 'pointer' } },
-        [React.createElement('option', { key: 'all', value: 'all' }, '全部城市')].concat(window.CITIES.map(function (c) { return React.createElement('option', { key: c, value: c }, c); }))
-      ),
-      React.createElement('button', { onClick: function () { onGroup(); }, style: { background: 'none', border: 'none', color: 'var(--accent)', fontSize: 18, fontWeight: 700, cursor: 'pointer', padding: '4px' } }, '👥')
-    )
+    React.createElement('button', { onClick: function () { onGroup(); }, style: { background: 'none', border: 'none', color: 'var(--accent)', fontSize: 18, fontWeight: 700, cursor: 'pointer', padding: '4px' } }, '👥')
   );
 
   if (pool.length === 0) {
@@ -319,22 +336,34 @@ function Dice({ store, onPick, onGroup }) {
       React.createElement('div', { style: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center', gap: 12 } },
         React.createElement('span', { style: { fontSize: 72 } }, '😵'),
         React.createElement('h2', { style: { margin: 0, fontSize: 19, fontWeight: 800, color: 'var(--ink)' } }, cityLabel + ' 沒有餐廳'),
-        React.createElement('p', { style: { color: 'var(--ink-soft)', margin: 0, fontSize: 14, lineHeight: 1.6 } }, '換個城市，或到探索頁打開「不限距離」')
+        React.createElement('p', { style: { color: 'var(--ink-soft)', margin: 0, fontSize: 14, lineHeight: 1.6 } }, '請到探索分頁調整城市、距離或料理範圍')
       )
     );
   }
 
   let playView = null;
-  if (diceStyle === 'dice') playView = React.createElement(DiceMode, { cands: pool, deal: deal, onResult: handleResult });
-  else if (diceStyle === 'slot') playView = React.createElement(SlotMode, { cands: pool, deal: deal, onResult: handleResult });
-  else playView = React.createElement(CardMode, { deal: deal, onResult: handleResult });
+  if (diceStyle === 'dice') playView = React.createElement(DiceMode, { cands: pool, deal: deal, onResult: handleResult, guideActive: guideActive, onGuideDone: onGuideDone, autoStart: guideActive });
+  else if (diceStyle === 'slot') playView = React.createElement(SlotMode, { cands: pool, deal: deal, onResult: handleResult, guideActive: guideActive, onGuideDone: onGuideDone, autoStart: guideActive });
+  else playView = React.createElement(CardMode, { deal: deal, onResult: handleResult, guideActive: guideActive, onGuideDone: onGuideDone, autoStart: guideActive });
 
   return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)' } }, header,
     React.createElement('div', { style: { flex: 1, overflow: 'hidden' } },
       stage === 'menu'
-        ? React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 18, padding: 20 } },
+        ? guideActive
+          ? playView
+          : React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 18, padding: 20 } },
             React.createElement('div', { style: { fontSize: 84 } }, diceStyle === 'dice' ? '🎲' : diceStyle === 'slot' ? '🎰' : '🎴'),
-            React.createElement('p', { style: { margin: 0, color: 'var(--ink-soft)', fontSize: 14, fontWeight: 600, textAlign: 'center' } }, '從 ' + cityLabel + ' 的 ' + pool.length + ' 家中，選出三家讓你挑'),
+            React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, flexWrap: 'wrap' } },
+              React.createElement('p', { style: { margin: 0, color: 'var(--ink-soft)', fontSize: 14, fontWeight: 600, textAlign: 'center' } }, '從探索範圍的 ' + pool.length + ' 家中，選出三家讓你挑'),
+              React.createElement('button', { onClick: function () { setShowScopeHelp(function (v) { return !v; }); }, 'aria-label': showScopeHelp ? '隱藏範圍說明' : '顯示範圍說明', style: { width: 24, height: 24, borderRadius: 999, border: '1.5px solid var(--line)', background: 'var(--surface)', color: 'var(--accent)', fontSize: 14, fontWeight: 900, cursor: 'pointer', lineHeight: 1 } }, '!')
+            ),
+            showScopeHelp && React.createElement('div', { style: { maxWidth: 300, padding: '11px 13px', borderRadius: 13, background: 'var(--surface)', border: '1px solid var(--line)', color: 'var(--ink-soft)', fontSize: 12.5, lineHeight: 1.6, textAlign: 'left' } },
+              React.createElement('b', { style: { color: 'var(--ink)' } }, '目前範圍：'), ' ', scopeLabel, '。請先到「探索」分頁選城市、距離或料理分類；骰子、拉霸和抽卡會直接從這個範圍內隨機挑餐廳。'
+            ),
+            guideActive && React.createElement('div', { style: { maxWidth: 310, padding: '12px 14px', borderRadius: 14, background: 'var(--accent-soft)', border: '1.5px solid var(--accent)', color: 'var(--ink)', fontSize: 12.6, lineHeight: 1.55, textAlign: 'left' } },
+              React.createElement('b', null, '讓骰子抽三家。'), '這會從剛剛的探索範圍挑出候選；看到喜歡的就可以直接選。下一步也能換成自己的 Google Maps 清單。',
+              React.createElement('button', { onClick: onGuideSkip, style: { display: 'block', marginTop: 9, padding: '8px 11px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink)', fontSize: 12, fontWeight: 800, cursor: 'pointer' } }, '我自己玩')
+            ),
             React.createElement('button', { onClick: function () { setStage('play'); }, style: { padding: '18px 40px', borderRadius: 20, border: 'none', background: 'var(--accent)', color: 'var(--accent-ink)', fontSize: 20, fontWeight: 800, cursor: 'pointer', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' } }, diceStyle === 'dice' ? '🎲 開始骰' : diceStyle === 'slot' ? '🎰 進入拉霸' : '🎴 開始抽卡')
           )
         : playView

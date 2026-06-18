@@ -53,7 +53,7 @@ function LogSheet({ store, preset, onClose }) {
     store.logMeal({
       date, restId: custom.trim() ? null : restId,
       name, cuisine: custom.trim() ? null : (r && r.cuisine),
-      price: r ? r.price : null,
+      price: custom.trim() ? null : (r && r.price),
       cost: null, mood, note,
     });
     onClose();
