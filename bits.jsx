@@ -42,6 +42,20 @@ function SegBar({ options, value, onChange, small }) {
   );
 }
 
+// 量測 iPhone 瀏海/動態島的頂部安全區高度（env(safe-area-inset-top)），量一次後快取
+let _safeTopInset = null;
+function safeTopInset() {
+  if (_safeTopInset != null) return _safeTopInset;
+  try {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none;';
+    document.body.appendChild(probe);
+    _safeTopInset = probe.getBoundingClientRect().height || 0;
+    document.body.removeChild(probe);
+  } catch (e) { _safeTopInset = 0; }
+  return _safeTopInset;
+}
+
 function Sheet({ open, onClose, children, title, full }) {
   // 可見視窗（VisualViewport）：鍵盤彈出時會即時縮小，分頁因此只佔「鍵盤上方」可見區，
   // 內容在分頁內捲動，而不是去捲整個 App（避免背景跟著動）。
@@ -81,8 +95,10 @@ function Sheet({ open, onClose, children, title, full }) {
   if (!open) return null;
 
   const availH = vv.h || window.innerHeight;
-  const maxLargeH = Math.max(240, availH - 12);                                   // 放大時高度
-  const defaultMaxH = Math.round(availH * (full ? 0.92 : 0.8));                   // 預設高度上限
+  // 放大上限：扣掉瀏海/動態島安全區 + 緩衝，讓頂部橫條永遠停在瀏海下方、抓得到
+  const topReserve = Math.max(safeTopInset(), 8) + 16;
+  const maxLargeH = Math.max(240, availH - topReserve);                          // 放大時高度
+  const defaultMaxH = Math.min(maxLargeH, Math.round(availH * (full ? 0.92 : 0.8))); // 預設高度上限
 
   const startDrag = function (e) {
     const y = e.touches ? e.touches[0].clientY : e.clientY;
