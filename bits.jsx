@@ -1,5 +1,6 @@
 /* 共用小元件 */
 const { Icons } = window;
+const { useState: useBitsState, useRef: useBitsRef } = React;
 
 function Stars({ value, size = 13, onChange }) {
   const full = Math.round(value || 0);
@@ -42,19 +43,62 @@ function SegBar({ options, value, onChange, small }) {
 }
 
 function Sheet({ open, onClose, children, title, full }) {
+  // 拖曳手勢：按住頂部橫條/標題列，往上滑放大、往下滑關閉
+  const [expanded, setExpanded] = useBitsState(false);
+  const [dragY, setDragY] = useBitsState(0);
+  const [dragging, setDragging] = useBitsState(false);
+  const dragRef = useBitsRef({ startY: 0, delta: 0, active: false });
+
+  // hooks 之後才可提早 return
   if (!open) return null;
+
+  const startDrag = function (e) {
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    dragRef.current = { startY: y, delta: 0, active: true };
+    setDragging(true);
+  };
+  const moveDrag = function (e) {
+    if (!dragRef.current.active) return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const delta = y - dragRef.current.startY;
+    dragRef.current.delta = delta;
+    // 只在往下拉時跟手位移；往上滑不位移，放手才放大
+    setDragY(delta > 0 ? delta : 0);
+  };
+  const endDrag = function () {
+    if (!dragRef.current.active) return;
+    const delta = dragRef.current.delta;
+    dragRef.current.active = false;
+    setDragging(false);
+    setDragY(0);
+    if (delta > 90) { onClose(); return; }            // 往下拉夠多 → 關閉
+    if (expanded && delta > 32) { setExpanded(false); return; }  // 放大狀態下小幅下拉 → 縮回
+    if (!expanded && delta < -40) { setExpanded(true); }         // 往上滑 → 放大
+  };
+  const dragHandlers = { onTouchStart: startDrag, onTouchMove: moveDrag, onTouchEnd: endDrag, onMouseDown: startDrag, onMouseMove: moveDrag, onMouseUp: endDrag, onMouseLeave: endDrag };
+
+  // 聚焦輸入欄位時，把欄位捲到鍵盤上方可見處
+  const onFocusIn = function (e) {
+    const t = e.target;
+    if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) {
+      setTimeout(function () { try { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (err) {} }, 280);
+    }
+  };
+
+  const maxH = expanded ? '96%' : (full ? '92%' : '80%');
+
   return React.createElement('div', { onClick: onClose, style: { position: 'absolute', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', background: 'rgba(10,8,6,.42)', backdropFilter: 'blur(2px)', animation: 'fadeIn .2s ease' } },
-    React.createElement('div', { onClick: (e) => e.stopPropagation(), style: { background: 'var(--surface)', borderTopLeftRadius: 26, borderTopRightRadius: 26, maxHeight: full ? '92%' : '80%', display: 'flex', flexDirection: 'column', boxShadow: '0 -10px 40px rgba(0,0,0,.25)', animation: 'sheetUp .28s cubic-bezier(.2,.9,.3,1)' } },
-      React.createElement('div', { style: { padding: '10px 0 4px', display: 'flex', justifyContent: 'center', flexShrink: 0 } },
+    React.createElement('div', { onClick: (e) => e.stopPropagation(), style: { background: 'var(--surface)', borderTopLeftRadius: 26, borderTopRightRadius: 26, maxHeight: maxH, display: 'flex', flexDirection: 'column', boxShadow: '0 -10px 40px rgba(0,0,0,.25)', animation: 'sheetUp .28s cubic-bezier(.2,.9,.3,1)', transform: 'translateY(' + dragY + 'px)', transition: dragging ? 'none' : 'transform .26s cubic-bezier(.2,.9,.3,1), max-height .26s ease' } },
+      React.createElement('div', Object.assign({ style: { padding: '10px 0 4px', display: 'flex', justifyContent: 'center', flexShrink: 0, cursor: 'grab', touchAction: 'none' } }, dragHandlers),
         React.createElement('div', { style: { width: 38, height: 4, borderRadius: 4, background: 'var(--line)' } })
       ),
-      title && React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 20px 10px', flexShrink: 0 } },
+      title && React.createElement('div', Object.assign({ style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 20px 10px', flexShrink: 0, cursor: 'grab', touchAction: 'none' } }, dragHandlers),
         React.createElement('h3', { style: { margin: 0, fontSize: 19, fontWeight: 800, color: 'var(--ink)', fontFamily: 'var(--font-display)' } }, title),
-        React.createElement('button', { onClick: onClose, style: { background: 'var(--surface-2)', border: 'none', borderRadius: 999, width: 32, height: 32, display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-soft)' } },
+        React.createElement('button', { onClick: onClose, onMouseDown: (e) => e.stopPropagation(), onTouchStart: (e) => e.stopPropagation(), style: { background: 'var(--surface-2)', border: 'none', borderRadius: 999, width: 32, height: 32, display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-soft)' } },
           React.createElement(Icons.close, { size: 18 })
         )
       ),
-      React.createElement('div', { style: { overflowY: 'auto', WebkitOverflowScrolling: 'touch' } }, children)
+      React.createElement('div', { onFocus: onFocusIn, style: { overflowY: 'auto', overflowX: 'hidden', minHeight: 0, WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' } }, children)
     )
   );
 }
