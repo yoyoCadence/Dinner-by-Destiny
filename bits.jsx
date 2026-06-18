@@ -1,6 +1,6 @@
 /* 共用小元件 */
 const { Icons } = window;
-const { useState: useBitsState, useRef: useBitsRef } = React;
+const { useState: useBitsState, useRef: useBitsRef, useEffect: useBitsEffect } = React;
 
 function Stars({ value, size = 13, onChange }) {
   const full = Math.round(value || 0);
@@ -43,18 +43,51 @@ function SegBar({ options, value, onChange, small }) {
 }
 
 function Sheet({ open, onClose, children, title, full }) {
-  // 拖曳手勢：按住頂部橫條/標題列，往上滑放大、往下滑關閉
-  const [expanded, setExpanded] = useBitsState(false);
-  const [dragY, setDragY] = useBitsState(0);
+  // 可見視窗（VisualViewport）：鍵盤彈出時會即時縮小，分頁因此只佔「鍵盤上方」可見區，
+  // 內容在分頁內捲動，而不是去捲整個 App（避免背景跟著動）。
+  const readVV = function () {
+    const v = window.visualViewport;
+    return v ? { h: v.height, top: v.offsetTop } : { h: window.innerHeight, top: 0 };
+  };
+  const [vv, setVv] = useBitsState(readVV);
+  const [expanded, setExpanded] = useBitsState(false); // 是否已拖到放大（接近全高）
+  const [dragH, setDragH] = useBitsState(null);        // 拖曳中的即時高度(px)，null = 用預設
+  const [dragY, setDragY] = useBitsState(0);           // 往下拉準備關閉的位移(px)
   const [dragging, setDragging] = useBitsState(false);
-  const dragRef = useBitsRef({ startY: 0, delta: 0, active: false });
+  const dragRef = useBitsRef({ startY: 0, baseH: 0, delta: 0, active: false });
+  const panelRef = useBitsRef(null);
+
+  // 追蹤可見視窗高度/位移；rezize 與 scroll 都更新，抵銷 iOS 鍵盤造成的位移
+  useBitsEffect(function () {
+    if (!open) return;
+    const v = window.visualViewport;
+    const update = function () { setVv(readVV()); };
+    update();
+    if (v) {
+      v.addEventListener('resize', update);
+      v.addEventListener('scroll', update);
+      return function () { v.removeEventListener('resize', update); v.removeEventListener('scroll', update); };
+    }
+    window.addEventListener('resize', update);
+    return function () { window.removeEventListener('resize', update); };
+  }, [open]);
+
+  // 關閉後重置拖曳/放大狀態，下次開啟回到預設高度
+  useBitsEffect(function () {
+    if (!open) { setExpanded(false); setDragH(null); setDragY(0); setDragging(false); }
+  }, [open]);
 
   // hooks 之後才可提早 return
   if (!open) return null;
 
+  const availH = vv.h || window.innerHeight;
+  const maxLargeH = Math.max(240, availH - 12);                                   // 放大時高度
+  const defaultMaxH = Math.round(availH * (full ? 0.92 : 0.8));                   // 預設高度上限
+
   const startDrag = function (e) {
     const y = e.touches ? e.touches[0].clientY : e.clientY;
-    dragRef.current = { startY: y, delta: 0, active: true };
+    const baseH = panelRef.current ? panelRef.current.offsetHeight : defaultMaxH;
+    dragRef.current = { startY: y, baseH: baseH, delta: 0, active: true };
     setDragging(true);
   };
   const moveDrag = function (e) {
@@ -62,8 +95,12 @@ function Sheet({ open, onClose, children, title, full }) {
     const y = e.touches ? e.touches[0].clientY : e.clientY;
     const delta = y - dragRef.current.startY;
     dragRef.current.delta = delta;
-    // 只在往下拉時跟手位移；往上滑不位移，放手才放大
-    setDragY(delta > 0 ? delta : 0);
+    if (delta < 0) {                                            // 往上拉 → 即時長高（拖到哪長到哪）
+      setDragH(Math.min(maxLargeH, dragRef.current.baseH - delta));
+      setDragY(0);
+    } else {                                                    // 往下拉 → 位移，準備關閉
+      setDragY(delta);
+    }
   };
   const endDrag = function () {
     if (!dragRef.current.active) return;
@@ -71,34 +108,51 @@ function Sheet({ open, onClose, children, title, full }) {
     dragRef.current.active = false;
     setDragging(false);
     setDragY(0);
-    if (delta > 90) { onClose(); return; }            // 往下拉夠多 → 關閉
-    if (expanded && delta > 32) { setExpanded(false); return; }  // 放大狀態下小幅下拉 → 縮回
-    if (!expanded && delta < -40) { setExpanded(true); }         // 往上滑 → 放大
+    if (delta > 90) { onClose(); return; }                              // 往下拉夠多 → 關閉
+    if (delta < -40) { setExpanded(true); setDragH(null); return; }     // 往上拉 → 放大並定住
+    if (expanded && delta > 24) { setExpanded(false); }                 // 已放大時小幅下拉 → 縮回
+    setDragH(null);                                                     // 其餘 → 回到目前狀態
   };
-  const dragHandlers = { onTouchStart: startDrag, onTouchMove: moveDrag, onTouchEnd: endDrag, onMouseDown: startDrag, onMouseMove: moveDrag, onMouseUp: endDrag, onMouseLeave: endDrag };
+  const dragHandlers = { onTouchStart: startDrag, onTouchMove: moveDrag, onTouchEnd: endDrag };
 
-  // 聚焦輸入欄位時，把欄位捲到鍵盤上方可見處
+  // 聚焦輸入欄位時，把欄位捲到鍵盤上方可見處（分頁內捲動，不動到整個 App）
   const onFocusIn = function (e) {
     const t = e.target;
     if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) {
-      setTimeout(function () { try { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (err) {} }, 280);
+      setTimeout(function () { try { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (err) {} }, 300);
     }
   };
 
-  const maxH = expanded ? '96%' : (full ? '92%' : '80%');
+  // 高度：拖曳中用即時值；放大用大尺寸；否則內容自適應 + 上限
+  const heightStyle = dragH != null
+    ? { height: dragH + 'px' }
+    : (expanded ? { height: maxLargeH + 'px' } : { maxHeight: defaultMaxH + 'px' });
 
-  return React.createElement('div', { onClick: onClose, style: { position: 'absolute', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', background: 'rgba(10,8,6,.42)', backdropFilter: 'blur(2px)', animation: 'fadeIn .2s ease' } },
-    React.createElement('div', { onClick: (e) => e.stopPropagation(), style: { background: 'var(--surface)', borderTopLeftRadius: 26, borderTopRightRadius: 26, maxHeight: maxH, display: 'flex', flexDirection: 'column', boxShadow: '0 -10px 40px rgba(0,0,0,.25)', animation: 'sheetUp .28s cubic-bezier(.2,.9,.3,1)', transform: 'translateY(' + dragY + 'px)', transition: dragging ? 'none' : 'transform .26s cubic-bezier(.2,.9,.3,1), max-height .26s ease' } },
-      React.createElement('div', Object.assign({ style: { padding: '10px 0 4px', display: 'flex', justifyContent: 'center', flexShrink: 0, cursor: 'grab', touchAction: 'none' } }, dragHandlers),
-        React.createElement('div', { style: { width: 38, height: 4, borderRadius: 4, background: 'var(--line)' } })
+  const overlayStyle = {
+    position: 'fixed', left: 0, right: 0, top: (vv.top || 0) + 'px', height: availH + 'px',
+    zIndex: 60, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+    background: 'rgba(10,8,6,.42)', backdropFilter: 'blur(2px)', animation: 'fadeIn .2s ease',
+  };
+  const panelStyle = Object.assign({
+    background: 'var(--surface)', borderTopLeftRadius: 26, borderTopRightRadius: 26,
+    display: 'flex', flexDirection: 'column', boxShadow: '0 -10px 40px rgba(0,0,0,.25)',
+    animation: 'sheetUp .28s cubic-bezier(.2,.9,.3,1)',
+    transform: 'translateY(' + dragY + 'px)',
+    transition: dragging ? 'none' : 'transform .26s cubic-bezier(.2,.9,.3,1), height .26s ease, max-height .26s ease',
+  }, heightStyle);
+
+  return React.createElement('div', { onClick: onClose, style: overlayStyle },
+    React.createElement('div', { ref: panelRef, onClick: (e) => e.stopPropagation(), style: panelStyle },
+      React.createElement('div', Object.assign({ style: { padding: '10px 0 6px', display: 'flex', justifyContent: 'center', flexShrink: 0, cursor: 'grab', touchAction: 'none' } }, dragHandlers),
+        React.createElement('div', { style: { width: 40, height: 5, borderRadius: 4, background: 'var(--line)' } })
       ),
-      title && React.createElement('div', Object.assign({ style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 20px 10px', flexShrink: 0, cursor: 'grab', touchAction: 'none' } }, dragHandlers),
+      title && React.createElement('div', Object.assign({ style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 20px 10px', flexShrink: 0, cursor: 'grab', touchAction: 'none' } }, dragHandlers),
         React.createElement('h3', { style: { margin: 0, fontSize: 19, fontWeight: 800, color: 'var(--ink)', fontFamily: 'var(--font-display)' } }, title),
-        React.createElement('button', { onClick: onClose, onMouseDown: (e) => e.stopPropagation(), onTouchStart: (e) => e.stopPropagation(), style: { background: 'var(--surface-2)', border: 'none', borderRadius: 999, width: 32, height: 32, display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-soft)' } },
+        React.createElement('button', { onClick: onClose, onTouchStart: (e) => e.stopPropagation(), style: { background: 'var(--surface-2)', border: 'none', borderRadius: 999, width: 32, height: 32, display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--ink-soft)' } },
           React.createElement(Icons.close, { size: 18 })
         )
       ),
-      React.createElement('div', { onFocus: onFocusIn, style: { overflowY: 'auto', overflowX: 'hidden', minHeight: 0, WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' } }, children)
+      React.createElement('div', { onFocus: onFocusIn, style: { flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' } }, children)
     )
   );
 }
