@@ -40,8 +40,13 @@ export function createStyleRecorder() {
 export function loadBrowserFiles(files, options = {}) {
   const localStorage = options.localStorage || createLocalStorage();
   const openedUrls = [];
+  const document = options.document || {
+    documentElement: { style: createStyleRecorder() },
+    body: { style: createStyleRecorder() },
+  };
   const window = Object.assign({
     localStorage,
+    document,
     open(url, target) {
       openedUrls.push({ url, target });
     },
@@ -50,6 +55,7 @@ export function loadBrowserFiles(files, options = {}) {
   const context = {
     window,
     localStorage,
+    document,
     React: options.React,
     console,
     Date: options.Date || Date,
@@ -68,7 +74,7 @@ export function loadBrowserFiles(files, options = {}) {
     vm.runInContext(readFileSync(file, 'utf8'), vmContext, { filename: file });
   }
 
-  return { context: vmContext, localStorage, openedUrls, window };
+  return { context: vmContext, document, localStorage, openedUrls, window };
 }
 
 export function createStoreHarness({ storedState } = {}) {

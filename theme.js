@@ -102,7 +102,15 @@ window.THEMES = {
 
 window.applyTheme = function (root, key) {
   const t = window.THEMES[key] || window.THEMES.warm;
-  Object.entries(t.vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  const targets = [];
+  if (typeof document !== 'undefined') {
+    if (document.documentElement) targets.push(document.documentElement);
+    if (document.body) targets.push(document.body);
+  }
+  if (root) targets.push(root);
+  targets.forEach(function (target) {
+    Object.entries(t.vars).forEach(([k, v]) => target.style.setProperty(k, v));
+  });
 };
 
 // haversine 距離（公尺）

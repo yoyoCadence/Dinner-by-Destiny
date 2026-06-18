@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
 import { createStyleRecorder, loadBrowserFiles } from './helpers/browser-env.mjs';
 
-const { openedUrls, window } = loadBrowserFiles(['data.js', 'theme.js']);
+const { document, openedUrls, window } = loadBrowserFiles(['data.js', 'theme.js']);
 
 const style = createStyleRecorder();
 window.applyTheme({ style }, 'dark');
 assert.equal(style.getPropertyValue('--bg'), '#0E0D14');
 assert.equal(style.getPropertyValue('--accent'), '#16E0C2');
+assert.equal(document.documentElement.style.getPropertyValue('--bg'), '#0E0D14');
+assert.equal(document.body.style.getPropertyValue('--surface'), '#1A1823');
 
 const fallbackStyle = createStyleRecorder();
 window.applyTheme({ style: fallbackStyle }, 'missing-theme');
