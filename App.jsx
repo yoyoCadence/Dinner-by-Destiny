@@ -228,9 +228,9 @@ window.DinnerApp = function App() {
     React.createElement('span', { style: { fontSize: 10.5, fontWeight: tab === key ? 800 : 600 } }, label)
   );
 
-  return React.createElement('div', { ref: screenRef, style: { width: '100%', height: '100%', background: 'var(--bg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' } },
+  return React.createElement('div', { ref: screenRef, style: { width: '100%', height: '100%', minHeight: '100%', boxSizing: 'border-box', background: 'var(--bg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative', paddingTop: 'env(safe-area-inset-top, 0px)' } },
     React.createElement('div', { style: { flex: 1, overflow: 'hidden' } }, mainScreen),
-    React.createElement('div', { style: { flexShrink: 0, display: 'flex', padding: '8px 8px 0', background: 'var(--surface)', borderTop: '1px solid var(--line)' } },
+    React.createElement('div', { style: { flexShrink: 0, display: 'flex', padding: '8px 8px calc(8px + env(safe-area-inset-bottom, 0px))', background: 'var(--surface)', borderTop: '1px solid var(--line)' } },
       btn('explore', '探索', React.createElement(window.Icons.compass, { size: 23 })),
       btn('dice', '骰子', null),
       btn('diary', '紀錄', React.createElement(window.Icons.book, { size: 23 })),

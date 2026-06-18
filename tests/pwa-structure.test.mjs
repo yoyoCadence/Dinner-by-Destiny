@@ -57,13 +57,17 @@ assert.ok(html.includes('caches.keys()'), 'Force refresh should clear app shell 
 assert.ok(html.includes('registration.unregister()'), 'Force refresh should unregister stale service workers before reloading');
 assert.ok(html.includes('app_refresh'), 'Force refresh should reload with a cache-busting URL parameter');
 assert.ok(!html.includes('localStorage.clear()'), 'PWA refresh must not clear imported local restaurant data');
-assert.ok(html.includes('width: 100vw; height: 100dvh'), 'mobile viewport should not render inside the desktop phone frame');
+assert.ok(html.includes('width: 100%; height: 100%; min-height: 100vh'), 'mobile viewport should fill the fixed stage instead of leaving browser chrome gaps');
+assert.ok(html.includes('background: var(--surface, #FFFFFF)'), 'outer viewport gaps should not fall back to the old black desktop background');
 assert.ok(!html.includes('width: 390px'), 'production PWA should not use a fixed phone-preview width');
 assert.ok(!html.includes('height: 844px'), 'production PWA should not use a fixed phone-preview height');
+assert.ok(!html.includes('height: 100dvh'), 'production PWA should not rely only on dynamic viewport height on iOS');
 assert.ok(!html.includes('border-radius: 54px'), 'production PWA should not render a decorative phone frame');
 assert.ok(!html.includes('app-preview-chrome'), 'production PWA should not include fake phone chrome CSS');
 assert.ok(!html.includes('function fit()'), 'production PWA should not scale a desktop phone mockup');
 assert.ok(app.includes("width: '100%'"));
+assert.ok(app.includes('safe-area-inset-top'), 'App shell should respect iOS top safe area');
+assert.ok(app.includes('safe-area-inset-bottom'), 'Bottom navigation should paint through the iOS bottom safe area');
 assert.ok(!app.includes('app-preview-chrome'), 'App should not render fake status/home bars');
 assert.ok(app.includes('第一次使用說明'), 'App should include a first-run onboarding sheet');
 assert.ok(app.includes('重看第一次使用說明'), 'Settings should let users reopen onboarding');
