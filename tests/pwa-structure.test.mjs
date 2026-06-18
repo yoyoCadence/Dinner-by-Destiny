@@ -166,7 +166,9 @@ assert.equal(pkg.scripts.start, 'node scripts/serve-static.mjs');
 assert.equal(pkg.scripts.test, 'node tests/run-all.mjs');
 assert.ok(deployWorkflow.includes('npm run test'), 'Pages workflow should run tests before deploying');
 assert.ok(deployWorkflow.includes('npm run build:pages'), 'Pages workflow should prepare the static artifact');
-assert.ok(deployWorkflow.includes('actions/deploy-pages'), 'Pages workflow should deploy through GitHub Pages');
+assert.ok(deployWorkflow.includes('contents: write'), 'Pages workflow should be able to push the gh-pages branch');
+assert.ok(deployWorkflow.includes('git worktree add -B gh-pages'), 'Pages workflow should publish the static artifact to gh-pages');
+assert.ok(deployWorkflow.includes('git push origin gh-pages'), 'Pages workflow should update the branch served by GitHub Pages');
 
 for (const ignored of ['.legacy_extract/', '*.zip', 'uploads/', '.env']) {
   assert.ok(gitignore.includes(ignored), `.gitignore should include ${ignored}`);
