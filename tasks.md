@@ -35,6 +35,7 @@ Current constraint: implementation is approved. Keep changes scoped to getting t
 
 ## Done
 
+- [x] Fix sheet UX on mobile: stop horizontal swipe revealing the white backdrop, make sheet content scroll while the keyboard is open (and auto-scroll the focused field into view), let the top handle drag up to enlarge / down to dismiss, and make the bottom nav center tab label follow the selected interaction mode (骰子/拉霸/抽卡)
 - [x] Fix stale mobile app shells so real phones leave the old preview frame after deployment
 - [x] Add a Settings manual latest-version refresh action that clears only app shell caches while preserving imported local data
 - [x] Add local manual restaurant entry and protect those restaurants from Google Maps import deletions
