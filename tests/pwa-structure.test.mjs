@@ -84,6 +84,8 @@ assert.ok(app.includes('pwa-update-available'), 'App should listen for PWA updat
 assert.ok(app.includes('有新版可以更新'), 'App should show an update prompt when a new version is ready');
 assert.ok(app.includes('已匯入餐廳和紀錄會保留'), 'Update prompt should reassure users that local imported data remains available');
 assert.ok(app.includes('window.applyPWAUpdate'), 'Update prompt should call the service worker update action');
+assert.ok(app.includes('appVersionLabel = window.APP_VERSION'), 'Settings footer should show the current app shell version');
+assert.ok(!app.includes('v1.0 ·'), 'Settings footer should not hard-code the old v1.0 label');
 assert.ok(app.includes('手動更新最新版本'), 'Settings should include a manual latest-version refresh action');
 assert.ok(app.includes('window.forcePWARefresh'), 'Manual refresh action should call the force PWA refresh helper');
 assert.ok(app.includes('不會清除已匯入餐廳與紀錄'), 'Manual refresh copy should promise imported data remains available');

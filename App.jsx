@@ -80,6 +80,7 @@ window.DinnerApp = function App() {
   const screenRef = useRef(null);
 
   const theme = store.state.settings.theme;
+  const appVersionLabel = window.APP_VERSION || 'dev';
   useEffect(() => { if (screenRef.current) window.applyTheme(screenRef.current, theme); }, [theme]);
 
   const openDetail = r => setDetail(r);
@@ -217,7 +218,7 @@ window.DinnerApp = function App() {
       ),
       React.createElement('div', { style: { padding: 12, background: 'var(--surface)', borderRadius: 12, fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.6 } },
         React.createElement('p', { style: { margin: 0, fontWeight: 700, marginBottom: 6 } }, '💡 關於應用'),
-        React.createElement('p', { style: { margin: 0 } }, '今晚吃命 v1.0 · 幫你決定今天吃什麼')
+        React.createElement('p', { style: { margin: 0 } }, '今晚吃命 ' + appVersionLabel + ' · 幫你決定今天吃什麼')
       )
     )
   );
